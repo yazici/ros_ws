@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="false" />
+  <arg name="limited" default="true"/>
+  <arg name="debug" default="false" />
+
+  <!-- launch the necessary drivers: ur_modern_driver at present time -->
+  <include file="$(find syn_ur10_bringup)/launch/syn_ur10_drivers.launch"/>
+
+  <!-- This argument enables using a customized configuration of the ur10 joint ranges.
+       Example configuration files can be found inside syn_ur10_bringup under config/joint_ranges/.
+       Then load the syn UR10 model -->
+  <arg name="ur10_joint_ranges_config" default="$(find syn_ur10_bringup)/config/joint_ranges/default.yaml"/>
+  <!-- robot model -->
+  <include file="$(find syn_ur10_bringup)/launch/syn_ur10_setup_upload.launch">
+    <arg name="joint_ranges_config" value="$(arg ur10_joint_ranges_config)"/>
+    <arg name="limited" default="$(arg limited)"/>
+  </include>
+
+  <!-- Remap follow_joint_trajectory -->
+  <remap if="$(arg sim)" from="/follow_joint_trajectory" to="/arm_controller/follow_joint_trajectory"/>
+
+  <!-- Launch moveit -->
+  <include file="$(find syn_ur10_bringup)/launch/move_group.launch">
+    <arg name="limited" default="$(arg limited)"/>
+    <arg name="debug" default="$(arg debug)" />
+  </include>
+
+  <include file="$(find syn_ur10_bringup)/launch/moveit_rviz.launch">
+    <arg name="config" default="true"/>
+  </include>
+
+</launch>

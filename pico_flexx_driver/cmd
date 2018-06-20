@@ -1,0 +1,2 @@
+roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true
+rosrun rviz rviz
