@@ -5,8 +5,6 @@ project(model_matcher)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  OpenCV
-  cv_bridge
   roscpp
   rospy
   std_msgs

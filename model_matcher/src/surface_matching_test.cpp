@@ -245,7 +245,7 @@ void loadAndTrainObjectModel ()
 {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // step 1: loading object models
-  string modelFileName = "/home/syn/ros_ws/src/model_matcher/model/platte_mit_schrauben.pcd";
+  std::string modelFileName = "/home/syn/ros_ws/src/ros_ws/model_matcher/model/platte_mit_schrauben.pcd";
   FeatureCloud template_cloud;
   template_cloud.loadInputCloud (modelFileName);
   object_templates.push_back (template_cloud);
@@ -286,13 +286,13 @@ void pointCloudCallback( const sensor_msgs::PointCloud2::ConstPtr& cloud_msg )
   ros::NodeHandle nh;
   ros::Publisher pub = nh.advertise< pcl::PointCloud<pcl::PointXYZ> > ("/surface_matching/points2", 1000);
   ros::Rate loop_rate(20);
-  cloud->header.frame_id = "camera_frame";
+  cloud->header.frame_id = "pico_flexx_optical_frame";
   int pub_counter = 0;
   while (pub_counter < 10)
   {
     pcl_conversions::toPCL(ros::Time::now(), cloud->header.stamp);
     pub.publish (cloud);
-    ros::spinOnce ();
+    //ros::spinOnce ();
     loop_rate.sleep ();
     pub_counter++;
   }
