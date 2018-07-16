@@ -1,0 +1,31 @@
+{
+    "trackers":
+        {
+            "id": 0,
+            "markers": [
+                {
+                    "id": 4,
+                    "name": "4",
+                    "options": "pos=7.615,0,12.5"
+                },
+                {
+                    "id": 5,
+                    "name": "5",
+                    "options": "pos=0,7.615,137.5"
+                },
+                {
+                    "id": 6,
+                    "name": "6",
+                    "options": "pos=7.615,0,262.5"
+                },
+                {
+                    "id": 7,
+                    "name": "7",
+                    "options": "pos=0,7.615,387.5"
+                }
+            ],
+            "name": "miniwand",
+            "options": "",
+            "type": "rigid"
+        }
+}

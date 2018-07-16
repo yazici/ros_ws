@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  driver-me-2900:
+    image: docker.synergeticon.com/driver-me-2900
+    network_mode: host    
+    environment:
+      NATS_HOST: "nats://localhost:4222"
+      IDLE_TIME: "500"
+      SHUTTER_TIME: "200"
+      NATS_CHANNEL: "foo"
+      RESOLUTION: 3

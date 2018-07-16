@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="arg_origin_id" default="0" />
+    <arg name="arg_xaxis_id" default="1" />
+    <arg name="arg_yaxis_id" default="2" />
+    <arg name="arg_origin_offsets" default="[0.0, 0.0, 0.0]" />
+
+    <node name="ps_align" pkg="phasespace" type="ps_align" output="screen">
+        <param name="origin_id" type="int" value="$(arg arg_origin_id)" />
+        <param name="xaxis_id" type="int" value="$(arg arg_xaxis_id)" />
+        <param name="yaxis_id" type="int" value="$(arg arg_yaxis_id)" />
+        <rosparam param="origin_offsets" subst_value="true">$(arg arg_origin_offsets)</rosparam>
+    </node>
+</launch>

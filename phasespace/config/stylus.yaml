@@ -1,0 +1,13 @@
+trackers:
+  - id: 1
+    type: "rigid"
+    name: "stylus"
+    markers:
+      - {id: 24, name: "small_ring_0", options: "pos=-18.1908,0,-21.9"}
+      - {id: 25, name: "small_ring_1", options: "pos=-0.89953,-17.7921,-21.6836"}
+      - {id: 26, name: "small_ring_2", options: "pos=18.1908,0,-21.9"}
+      - {id: 27, name: "small_ring_3", options: "pos=0.807593,18.0228,-21.6836"}
+      - {id: 28, name: "large_ring_4", options: "pos=0.801741,46.7872,-156.977"}
+      - {id: 29, name: "large_ring_5", options: "pos=38.811,4.67253,-158.76"}
+      - {id: 30, name: "large_ring_6", options: "pos=-5.01625,-32.4563,-160.765"}
+      - {id: 31, name: "large_ring_7", options: "pos=-40.3851,7.3563,-161.57"}

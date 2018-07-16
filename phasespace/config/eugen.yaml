@@ -1,0 +1,38 @@
+trackers:
+  - id: 1
+    type: "point"
+    name: "rhand"
+    markers:
+      - {id: 3, name: "rhand_WR", options: ""}
+      - {id: 4, name: "rhand_TH4", options: ""}
+      - {id: 5, name: "rhand_TH3", options: ""}
+      - {id: 6, name: "rhand_TH2", options: ""}
+      - {id: 7, name: "rhand_TH1", options: ""}
+      - {id: 8, name: "rhand_FF4", options: ""}
+      - {id: 9, name: "rhand_FF3", options: ""}
+      - {id: 10, name: "rhand_FF2", options: ""}
+      - {id: 11, name: "rhand_FF1", options: ""}
+      - {id: 12, name: "rhand_MF4", options: ""}
+      - {id: 13, name: "rhand_MF3", options: ""}
+      - {id: 14, name: "rhand_MF2", options: ""}
+      - {id: 15, name: "rhand_MF1", options: ""}
+      - {id: 16, name: "rhand_RF4", options: ""}
+      - {id: 17, name: "rhand_RF3", options: ""}
+      - {id: 18, name: "rhand_RF2", options: ""}
+      - {id: 19, name: "rhand_RF1", options: ""}
+      - {id: 20, name: "rhand_LF4", options: ""}
+      - {id: 21, name: "rhand_LF3", options: ""}
+      - {id: 22, name: "rhand_LF2", options: ""}
+      - {id: 23, name: "rhand_LF1", options: ""}
+  - id: 3
+    type: "rigid"
+    name: "bottle"
+    markers:
+      - {id: 24, name: "bottle_top_ring_0", options: "pos=43.6013,0,-111"}
+      - {id: 25, name: "bottle_top_ring_1", options: "pos=-1.21136,43.0428,-110.861"}
+      - {id: 26, name: "bottle_top_ring_2", options: "pos=1.04894,-44.6032,-110.861"}
+      - {id: 27, name: "bottle_top_ring_3", options: "pos=-43.6013,0,-111"}
+      - {id: 28, name: "bottle_bottom_ring_4", options: "pos=42.0788,0.0207356,-259.261"}
+      - {id: 29, name: "bottle_bottom_ring_5", options: "pos=-0.296168,-42.8979,-260.63"}
+      - {id: 30, name: "bottle_bottom_ring_6", options: "pos=-2.85987,42.2863,-259.479"}
+      - {id: 31, name: "bottle_bottom_ring_7", options: "pos=-43.5367,1.13893,-259.612"}

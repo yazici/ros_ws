@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="arg_owl_server" default="tams215.informatik.uni-hamburg.de" />
+    <arg name="arg_owl_slave_mode" default="false" />
+    <arg name="arg_owl_profile" default="old_single_hand_bottle" /> <!-- "default" /> -->
+    <arg name="arg_owl_rate" default="240" />
+    <arg name="arg_owl_led_power" default="0.05" />
+    <arg name="arg_tracker_file" default="$(find phasespace)/config/eugen.yaml" />
+    <arg name="arg_run_tf_info" default="true" />
+    <arg name="arg_tf_rate" default="30" />
+    <arg name="arg_run_vis_info" default="true" />
+    <arg name="arg_vis_rate" default="30" />
+
+    <node name="ps_owl" pkg="phasespace" type="ps_owl" required="true" output="screen">
+        <param name="owl_server" type="str" value="$(arg arg_owl_server)" />
+        <param name="owl_slave_mode" type="bool" value="$(arg arg_owl_slave_mode)" />
+        <param name="owl_profile" type="str" value="$(arg arg_owl_profile)" />
+        <param name="owl_rate" type="int" value="$(arg arg_owl_rate)" />
+        <param name="owl_led_power" type="double" value="$(arg arg_owl_led_power)" />
+        <param name="owl_scale" type="double" value="0.001" />
+        <param name="tracker_file" type="str" value="$(arg arg_tracker_file)" />
+    </node>
+
+    <group if="$(arg arg_run_tf_info)">
+        <node name="tf_info" pkg="phasespace" type="tf_info" required="true" output="screen">
+            <param name="rate" type="int" value="$(arg arg_tf_rate)" />
+        </node>
+    </group>
+
+    <group if="$(arg arg_run_vis_info)">
+        <node name="vis_info" pkg="phasespace" type="vis_info" required="true" output="screen">
+            <param name="rate" type="int" value="$(arg arg_vis_rate)" />
+        </node>
+    </group>
+</launch>

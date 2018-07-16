@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Example launch file for the PhaseSpace ImpulseX2E motion-tracker
+       with ROS. Connects to the PhaseSpace OWL server, publishes a 
+       world tf frame, and starts rviz.
+  -->
+
+<!--  <param name="robot_description" command="$(find xacro)/xacro.py '$(find sr_hand)/model/robots/xacro/arm_
+and_hand_motor.urdf.xacro'"/>
+  -->
+
+  <!--
+  <node pkg="tams_phasespace" name="phasespace" type="tams_phasespace" output="screen">
+    <param name="parent_frame" type="string" value="world" />
+    <param name="owl_frequency" type="double" value="480.0"/>
+    <param name="owl_server_name" type="string" value="192.168.169.201"/>
+    <param name="debug_level" type="int" value="1" />
+    <param name="publish_cameras" type="boolean" value="true" />
+    <param name="marker_radius" type="double" value="0.05" />
+  </node>
+  -->
+
+
+  <!-- Note: disable once the phasespace_markers node is able to publish
+       the correct world->phasepase_base transformation itself. -->
+  <node pkg="tf" type="static_transform_publisher" name="world_broadcaster" 
+        args="1 0 0 0 0 0 world hugo 10" />
+
+  <node pkg="tf" type="static_transform_publisher" name="systempose_ros_broadcaster" 
+        args="0.1 0 0   0 1.571 0 phasespace_systempose phasespace_ros 10" />
+
+
+  <node pkg="topic_tools" name="throttle_led_markers" type="throttle" output="screen"
+        args="messages /phasespace/rviz_led_markers 30" >
+  </node>
+
+
+  <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen"
+        args="-d $(find tams_phasespace)/config/demo1.rviz" >
+  </node>
+
+</launch>

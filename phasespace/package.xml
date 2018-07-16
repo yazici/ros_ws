@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>phasespace</name>
+    <version>0.0.0</version>
+    <description>The phasespace package</description>
+    <maintainer email="erichter@informatik.uni-hamburg.de">Eugen Richter</maintainer>
+    <license>BSD</license>
+
+    <!-- Optional attribute type can be: website, bugtracker, or repository -->
+    <!-- <url type="website">http://wiki.ros.org/phasespace</url> -->
+
+    <author email="erichter@informatik.uni-hamburg.de">Eugen Richter</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <depend>dynamic_reconfigure</depend>
+    <depend>phasespace_msgs</depend>
+    <depend>roscpp</depend>
+    <depend>tf2_ros</depend>
+    <depend>visualization_msgs</depend>
+    <depend>yaml-cpp</depend>
+
+    <export>
+    </export>
+</package>

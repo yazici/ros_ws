@@ -1,0 +1,19 @@
+// tutorials
+https://docs.opencv.org/3.4.1/da/d5c/tutorial_canny_detector.html
+http://pointclouds.org/documentation/tutorials/planar_segmentation.php
+
+//launch file for sensors: like  CamBoard pico flexx, realsense, zed, and kinect2
+//roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true
+
+//roslaunch zed_wrapper display.launch
+
+//roslaunch kinect2_bridge kinect2_bridge.launch
+//rosrun rviz rviz
+
+roslaunch realsense2_camera rs_rgbd.launch
+rosrun rviz rviz
+
+cd /home/syn/ros_ws/src/opencv_test/src
+./object_localizer.py
+
+rosrun opencv_test pcl_processor
