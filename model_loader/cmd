@@ -1,0 +1,4 @@
+For testing this module
+
+1, run roslaunch model_loader gui.launch
+2, run rosbag play /home/syn/ros_ws/src/pepperl_fuchs/pepperl_fuchs_r2000/record/2018-05-28-12-20-00.bag

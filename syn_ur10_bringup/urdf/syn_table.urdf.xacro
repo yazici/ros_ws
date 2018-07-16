@@ -34,13 +34,13 @@
       <material name="black" />
       <origin xyz="0.0 0.0 0.0" />
       <geometry>
-        <box size="5.0 5.0 0.001" />
+        <box size="8.0 8.0 0.001" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0" />
       <geometry>
-      <box size="8.0 8.0 0.001" />
+        <box size="8.0 8.0 0.001" />
       </geometry>
     </collision>
   </link>
@@ -54,6 +54,12 @@
     <kp>1000000.0</kp>
     <kd>1.0</kd>
   </gazebo>
+
+  <link name="table_x"/>
+
+  <link name="table_y"/>
+
+  <link name="table_z"/>
 
   <link name="table">
     <inertial>
@@ -119,8 +125,32 @@
     <kd>1.0</kd>
   </gazebo>
 
-  <joint name="floor_table_joint" type="fixed">
+  <joint name="table_floor_x_joint" type="prismatic">
     <parent link="floor"/>
+    <child link="table_x"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit upper="5" lower="-5" effort="1" velocity="1.00"/>
+  </joint>
+
+  <joint name="table_floor_y_joint" type="prismatic">
+    <parent link="table_x"/>
+    <child link="table_y"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit upper="5" lower="-5" effort="1" velocity="1.00"/>
+  </joint>
+
+  <joint name="table_floor_z_joint" type="revolute">
+    <parent link="table_y"/>
+    <child link="table_z"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit upper="3.1415926" lower="-3.1415926" effort="2.16" velocity="2.16"/>
+  </joint>
+
+  <joint name="table_z_table_joint" type="fixed">
+    <parent link="table_z"/>
     <child link="table"/>
     <origin xyz="0 0 0" rpy="0 0 0" />
   </joint>

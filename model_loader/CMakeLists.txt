@@ -34,3 +34,6 @@ target_link_libraries(scan_reader ${catkin_LIBRARIES})
 
 add_executable(add_and_remove_object src/add_and_remove_object.cpp)
 target_link_libraries(add_and_remove_object ${catkin_LIBRARIES})
+
+add_executable(add_and_remove_aircraft_frame src/add_and_remove_aircraft_frame.cpp)
+target_link_libraries(add_and_remove_aircraft_frame ${catkin_LIBRARIES})

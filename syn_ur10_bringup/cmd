@@ -1,0 +1,4 @@
+roslaunch syn_ur10_bringup demo.launch
+
+
+rostopic pub /joint_states sensor_msgs/JointState '{header: {stamp: now}, name: [table_floor_x_joint, table_floor_y_joint], position: [-0.25, 0.22]}'
