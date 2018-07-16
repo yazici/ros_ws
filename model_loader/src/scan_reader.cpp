@@ -37,92 +37,57 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 
+#include <sensor_msgs/JointState.h>
+
 laser_geometry::LaserProjection projector_;
 ros::Publisher pub;
-ros::ServiceClient planning_scene_diff_client;
-std::string object_id = "model_loaded";
+ros::Publisher pub_joint;
 int msg_counter = 0;
 float point1_x = 0.0;
 float point2_x = 0.0;
 float point1_y = 0.0;
 float point2_y = 0.0;
-float point1_z = 0.55;
-float point2_z = 0.55;
-
-
-moveit_msgs::CollisionObject spawnObject( std::string object_id, float x, float y, float z, float roll, float pitch, float yaw )
-{
-    moveit_msgs::ApplyPlanningScene srv;
-    moveit_msgs::PlanningScene planning_scene;
-    planning_scene.is_diff = true;
-    planning_scene.robot_state.is_diff = true;
-
-    moveit_msgs::CollisionObject object;
-    object.id = object_id;
-    object.header.frame_id = "world";
-
-    static const Eigen::Vector3d scale(0.001, 0.001, 0.001);
-		shapes::Mesh* m = shapes::createMeshFromResource("package://model_loader/model/M1-2-010-0-001-A_Jig-Aussenhaut-FAL.stl", scale);
-		shapes::ShapeMsg mesh_msg;
-		shapes::constructMsgFromShape(m, mesh_msg);
-	  shape_msgs::Mesh mesh;
-    mesh = boost::get<shape_msgs::Mesh>(mesh_msg);
-    object.meshes.push_back(mesh);
-
-    geometry_msgs::Pose pose;
-    pose.position.x = x;
-    pose.position.y = y;
-    pose.position.z = z;
-    pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
-    object.mesh_poses.push_back(pose);
-
-    object.operation = object.ADD;
-    planning_scene.world.collision_objects.push_back(object);
-
-    srv.request.scene = planning_scene;
-    planning_scene_diff_client.call(srv);
-
-    return object;
-}
-
+float aircraft_frame_y_offset = 110; //cm
+float table_y_offset = 30; //cm
+float table_x_offset = 0; //cm
+float point_z = 0.55; //m
 
 void get_the_central_point()
 {
+  std::cout << "Value of point1 is [" << point1_x << ", " << point1_y << "], point1 is [" << point2_x << ", " << point2_y << "]" << std::endl;
   float point1_x_tmp = std::round(point1_x*100.0);
   float point2_x_tmp = std::round(point2_x*100.0);
   float point1_y_tmp = std::round(point1_y*100.0);
   float point2_y_tmp = std::round(point2_y*100.0);
-  float x0 = (point1_x_tmp + point2_x_tmp) / 2.0;
-  float y0 = (point1_y_tmp + point2_y_tmp) / 2.0;
-  float x = 0.0;
-  float y = 0.0;
-  float d = 110.0;
-  if ( std::abs( point1_x_tmp - point2_x_tmp - 0.0 ) < 1)
+  float x0 = (point1_x_tmp + point2_x_tmp) / 2.0 + table_x_offset;
+  float y0 = (point1_y_tmp + point2_y_tmp) / 2.0 + table_y_offset;
+
+  if ( std::abs(point1_y_tmp - point2_y_tmp) > 6 )
   {
-    x = x0 + d;
-  } else if ( std::abs( point1_y_tmp - point2_y_tmp - 0.0 ) < 1)
-  {
-    y = y0 + d;
-  } else
-  {
-    float k =  ( point1_x_tmp - point2_x_tmp ) / ( point1_y_tmp - point2_y_tmp );
-    y = y0 + k * std::sqrt( std::pow(d, 2) / ( 1 + std::pow(k, 2) ) );
-    x = x0 + ( 1.0 / k ) * ( y - y0 );
+    std::cerr << "[y1, y2] = [" << point1_y_tmp << ", " << point2_y_tmp << "]; [y1 - y2] = " << std::abs(point1_y_tmp - point2_y_tmp) << std::endl;
+    std::cerr << "The robot need to face the aircraft_frame and have no people at front" << std::endl;
+    return;
   }
-  x = std::round(x) / 100.0;
-  y = std::round(y) / 100.0;
-  float z = point1_z;
+
+  float x = std::round( -x0 ) / 100.0;
+  float y = std::round( aircraft_frame_y_offset - y0 ) / 100.0;
+  float z = point_z;
   msg_counter++;
   std::cout << msg_counter << "[x0, y0] = [" << x0 << ", " << y0 << "]; [x, y] = [" << x << ", " << y << "]" << std::endl;
-  if (msg_counter % 500 == 0)
-  {
-    spawnObject( object_id, x, y, z, 0.0, 0.0, 0.0 );
-  }
+
+  sensor_msgs::JointState table_joint_msg;
+  table_joint_msg.header.stamp = ros::Time::now();
+  table_joint_msg.name.push_back("table_floor_x_joint");
+  table_joint_msg.name.push_back("table_floor_y_joint");
+  table_joint_msg.position.push_back(x);
+  table_joint_msg.position.push_back(y);
+  pub_joint.publish(table_joint_msg);
 
 }
 
 void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 {
+  // convert from laserscan to pcl point cloud
   sensor_msgs::PointCloud2 sensor_pc2;
   projector_.projectLaser( *scan_in, sensor_pc2 );
 
@@ -135,11 +100,10 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
   pcl_conversions::toPCL( ros::Time::now(), temp_cloud->header.stamp );
   //pub.publish( temp_cloud );
 
-  //pcl::PointXYZ temp_point(0.0, 0.0, 0.0);
   if( temp_cloud->height == 1 )
   {
     ///*
-    // filter point within the range x = [-2.2, 0.0], y = [-3.0, 0.0] and x = [0.0, 2.2], y = [-3.0, 0.0]
+    // filter point within the range x = [-2.2, 0.0], y = [-2.0, 0.0] and x = [0.0, 2.2], y = [-2.0, 0.0]
     pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud_left (new pcl::PointCloud<pcl::PointXYZ>);
     std::vector<pcl::PointXYZ> temp_vector_left;
     int point_counter_left = 0;
@@ -164,7 +128,6 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 
     temp_cloud_left->header.frame_id = "scan";
     temp_cloud_left->width = point_counter_left;
-    //std::cout << point_counter_left << std::endl;
     temp_cloud_left->height = 1;
     for( pcl::PointXYZ temp_point : temp_vector_left )
     {
@@ -175,7 +138,6 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 
     temp_cloud_right->header.frame_id = "scan";
     temp_cloud_right->width = point_counter_right;
-    //std::cout << point_counter_right << std::endl;
     temp_cloud_right->height = 1;
     for( pcl::PointXYZ temp_point : temp_vector_right )
     {
@@ -291,21 +253,9 @@ int main( int argc, char **argv )
 {
   ros::init( argc, argv, "scan_reader" );
   ros::NodeHandle nh;
-
-  // publish scan transform w.r.t ur10_mount
-  /*
-  tf::TransformBroadcaster tf_pose_broadcaster_;
-  tf::Transform t;
-  t.setOrigin( tf::Vector3( 0.0, -0.32, 0.02 ) );
-  t.setRotation( tf::Quaternion( 0.0, 0.0, 0.0, 1.0 ) );
-  tf_pose_broadcaster_.sendTransform( tf::StampedTransform( t, ros::Time::now(), "/ur10_mount", "/scan" ) );
-  ros::Duration(0.5).sleep();
-  */
-
   ros::Subscriber sub = nh.subscribe( "/r2000_driver_node/scan", 10, scanCallback );
   pub = nh.advertise< pcl::PointCloud< pcl::PointXYZ > >( "points2", 1000 );
-  planning_scene_diff_client = nh.serviceClient<moveit_msgs::ApplyPlanningScene>("apply_planning_scene");
-  planning_scene_diff_client.waitForExistence();
+  pub_joint = nh.advertise< sensor_msgs::JointState >( "joint_states", 100 );
   ros::spin();
 
   return 0;
