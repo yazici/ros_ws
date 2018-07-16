@@ -61,11 +61,13 @@ void get_the_central_point()
   float point2_y_tmp = std::round(point2_y*100.0);
   float x0 = (point1_x_tmp + point2_x_tmp) / 2.0 + table_x_offset;
   float y0 = (point1_y_tmp + point2_y_tmp) / 2.0 + table_y_offset;
+  float distance = std::sqrt( std::pow( point1_x_tmp -point2_x_tmp, 2 ) + std::pow( point1_y_tmp - point2_y_tmp, 2 ) );
+  std::cout << "|y1 - y2| = " << std::abs(point1_y_tmp - point2_y_tmp) << " distance between p1 and p2 is:" << distance << std::endl;
 
-  if ( std::abs(point1_y_tmp - point2_y_tmp) > 6 )
+  if ( std::abs(point1_y_tmp - point2_y_tmp) > 6 && std::abs( distance -88.0 ) > 2 )
   {
-    std::cerr << "[y1, y2] = [" << point1_y_tmp << ", " << point2_y_tmp << "]; [y1 - y2] = " << std::abs(point1_y_tmp - point2_y_tmp) << std::endl;
-    std::cerr << "The robot need to face the aircraft_frame and have no people at front" << std::endl;
+    std::cerr << "|y1 - y2| = " << std::abs(point1_y_tmp - point2_y_tmp) << std::endl;
+    std::cerr << "###-> The robot need to face the aircraft_frame and have no people at front" << std::endl;
     return;
   }
 
@@ -73,7 +75,7 @@ void get_the_central_point()
   float y = std::round( aircraft_frame_y_offset - y0 ) / 100.0;
   float z = point_z;
   msg_counter++;
-  std::cout << msg_counter << "[x0, y0] = [" << x0 << ", " << y0 << "]; [x, y] = [" << x << ", " << y << "]" << std::endl;
+  std::cout << msg_counter << ": [x0, y0] = [" << x0 << ", " << y0 << "]; [x, y] = [" << x << ", " << y << "]" << std::endl;
 
   sensor_msgs::JointState table_joint_msg;
   table_joint_msg.header.stamp = ros::Time::now();
