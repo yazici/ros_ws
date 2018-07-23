@@ -7,6 +7,9 @@
   <!-- arm -->
   <xacro:include filename="$(find syn_ur10_bringup)/urdf/arm.urdf.xacro" />
 
+  <!-- tool -->
+  <xacro:include filename="$(find syn_ur10_bringup)/urdf/tool.urdf.xacro" />
+
   <xacro:property name="ur10_mount_height" value="0.01" />
 
   <link name="world" />
@@ -17,31 +20,7 @@
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
-  <!-- <link name="aircraft_frame">
-    <inertial>
-      <mass value="20000" />
-      <origin xyz="0 0 0" />
-      <inertia  ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01" />
-    </inertial>
-    <visual>
-      <geometry>
-        <mesh filename="package://syn_ur10_bringup/meshes/M1-2-010-0-001-A_Jig-Aussenhaut-FAL.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://syn_ur10_bringup/meshes/M1-2-010-0-001-A_Jig-Aussenhaut-FAL.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="aircraft_frame_world_joint" type="fixed">
-    <parent link="world"/>
-    <child link="aircraft_frame" />
-    <origin xyz="0.0 0.0 0.53" rpy="0.0 0.0 0.0" />
-  </joint> -->
-
-  <link name="map" />
+  <link name="map" /> 
 
   <joint name="map_world_joint" type="fixed">
     <parent link="world" />
@@ -52,7 +31,13 @@
   <joint name="table_ur10_joint" type="fixed">
     <parent link="ur10_mount" />
     <child link = "ur10_base_link" />
-    <origin xyz="0.0 0.0 ${ur10_mount_height}" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 ${ur10_mount_height}" rpy="0.0 0.0 ${radians(90)}" />
+  </joint>
+
+  <joint name="ur10_tool_joint" type="fixed">
+    <parent link="ur10_tool0" />
+    <child link = "tool_base" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
 </robot>

@@ -5,6 +5,12 @@
   <arg name="limited" default="true"/>
   <arg name="debug" default="false" />
 
+  <!-- launch file for r2000 -->
+  <include file="$(find pepperl_fuchs_r2000)/launch/r2000.launch"/>
+
+  <!-- launch file for realsense2_camera -->
+  <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
+
   <!-- launch the necessary drivers: ur_modern_driver at present time -->
   <include file="$(find syn_ur10_bringup)/launch/syn_ur10_drivers.launch"/>
 
