@@ -1,5 +1,15 @@
-#include <ros/ros.h>
 #include <iostream>
+#include <cmath>
+#include <stdio.h>
+#include <fstream>
+#include <vector>
+#include <sstream>
+#include <string>
+
+#define PI 3.14159265
+
+#include <ros/ros.h>
+#include <ros/package.h>
 
 #include <sensor_msgs/LaserScan.h>
 #include <laser_geometry/laser_geometry.h>
@@ -11,81 +21,83 @@
 #include <pcl/kdtree/kdtree_flann.h>
 
 #include <tf/transform_broadcaster.h>
-#include <cmath>
-
-#include <stdio.h>
-#include <fstream>
-#include <vector>
-#include <sstream>
-#include <string>
-
-#include <geometric_shapes/shape_messages.h>
-#include "geometric_shapes/shapes.h"
-#include "geometric_shapes/mesh_operations.h"
-#include "geometric_shapes/shape_operations.h"
-
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit_msgs/CollisionObject.h>
-#include <moveit_msgs/AttachedCollisionObject.h>
-#include <moveit_msgs/ApplyPlanningScene.h>
-#include <moveit_msgs/Grasp.h>
-
-#include <ros/package.h>
-
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 
-#include <sensor_msgs/JointState.h>
-
-laser_geometry::LaserProjection projector_;
-ros::Publisher pub;
-ros::Publisher pub_joint;
 int msg_counter = 0;
 float point1_x = 0.0;
-float point2_x = 0.0;
 float point1_y = 0.0;
+float point2_x = 0.0;
 float point2_y = 0.0;
-float aircraft_frame_y_offset = 110; //cm
-float table_y_offset = 30; //cm
-float table_x_offset = 0; //cm
-float point_z = 0.55; //m
+float a_f_offset = 156; //cm
+float scan_offset = 40; //cm
+float old_x = 10000.0; //cm
+float old_y = 10000.0; //cm
 
 void get_the_central_point()
 {
-  std::cout << "Value of point1 is [" << point1_x << ", " << point1_y << "], point1 is [" << point2_x << ", " << point2_y << "]" << std::endl;
-  float point1_x_tmp = std::round(point1_x*100.0);
-  float point2_x_tmp = std::round(point2_x*100.0);
-  float point1_y_tmp = std::round(point1_y*100.0);
-  float point2_y_tmp = std::round(point2_y*100.0);
-  float x0 = (point1_x_tmp + point2_x_tmp) / 2.0 + table_x_offset;
-  float y0 = (point1_y_tmp + point2_y_tmp) / 2.0 + table_y_offset;
-  float distance = std::sqrt( std::pow( point1_x_tmp -point2_x_tmp, 2 ) + std::pow( point1_y_tmp - point2_y_tmp, 2 ) );
-  std::cout << "|y1 - y2| = " << std::abs(point1_y_tmp - point2_y_tmp) << " distance between p1 and p2 is:" << distance << std::endl;
+  // from meter to millimeter
+  float x1 = std::round( point1_x * 100.0 );
+  float y1 = std::round( point1_y * 100.0 );
+  float x2 = std::round( point2_x * 100.0 );
+  float y2 = std::round( point2_y * 100.0 );
+  float dist_p1_p2 = std::sqrt( std::pow( x1 - x2, 2 ) + std::pow( y1 - y2, 2 ) );
+  // ROS_INFO_STREAM ( "Point1 (p1): [" << x1 << ", " << y1 << "], point2 (p2): [" << x2 << ", " << y2 << "]; Dist(p1, p2):" << dist_p1_p2 );
 
-  if ( std::abs(point1_y_tmp - point2_y_tmp) > 6 && std::abs( distance -88.0 ) > 2 )
+  if ( std::abs( dist_p1_p2 - 88.0 ) > 3 )
   {
-    std::cerr << "|y1 - y2| = " << std::abs(point1_y_tmp - point2_y_tmp) << std::endl;
-    std::cerr << "###-> The robot need to face the aircraft_frame and have no people at front" << std::endl;
+    // ROS_INFO_STREAM ( "Point1 (p1): [" << x1 << ", " << y1 << "], point2 (p2): [" << x2 << ", " << y2 << "]; Dist(p1, p2):" << dist_p1_p2 );
+    // ROS_ERROR_STREAM ( "ERROR -> The robot needs to face the aircraft_frame and have no people in the front." );
     return;
   }
 
-  float x = std::round( -x0 ) / 100.0;
-  float y = std::round( aircraft_frame_y_offset - y0 ) / 100.0;
-  float z = point_z;
-  msg_counter++;
-  std::cout << msg_counter << ": [x0, y0] = [" << x0 << ", " << y0 << "]; [x, y] = [" << x << ", " << y << "]" << std::endl;
+  // start to calculate the central point of the table w.r.t the world frame
+  float v_p1_p2_x = x2 - x1;
+  float v_p1_p2_y = y2 - y1;
+  float v_p1_s_x = 0.0 - x1;
+  float v_p1_s_y = 0.0 - y1;
+  float dist_p1_sp = ( v_p1_s_x * v_p1_p2_x + v_p1_s_y * v_p1_p2_y ) / dist_p1_p2;
+  float v_p1_sp_x = dist_p1_sp * ( v_p1_p2_x / dist_p1_p2 );
+  float v_p1_sp_y = dist_p1_sp * ( v_p1_p2_y / dist_p1_p2 );
+  float v_s_sp_x = v_p1_s_x - v_p1_sp_x;
+  float v_s_sp_y = v_p1_s_y - v_p1_sp_y;
+  double theta = std::atan2( v_s_sp_y, v_s_sp_x );
+  double theta2 = ( PI / 2.0 ) - theta;
+  double x_offset = std::sin( theta2 ) * scan_offset;
+  double y_offset = std::cos( theta2 ) * scan_offset;
+  // std::cout << "Degree = " << theta * 180 / PI << " [x_offset, y_offset] = [" << x_offset << ", " << y_offset << "]" << std::endl;
 
-  sensor_msgs::JointState table_joint_msg;
-  table_joint_msg.header.stamp = ros::Time::now();
-  table_joint_msg.name.push_back("table_floor_x_joint");
-  table_joint_msg.name.push_back("table_floor_y_joint");
-  table_joint_msg.position.push_back(x);
-  table_joint_msg.position.push_back(y);
-  pub_joint.publish(table_joint_msg);
+  double dist_s_sp = std::sqrt( std::pow( v_s_sp_x, 2 ) + std::pow( v_s_sp_y, 2 ) );
+  double dist_sp_0 = 0.0;
+  if ( dist_p1_sp > dist_p1_p2 / 2.0 )
+  {
+    dist_sp_0 = ( dist_p1_sp - ( dist_p1_p2 / 2.0 ) );
+  }  else
+  {
+    dist_sp_0 = - ( ( dist_p1_p2 / 2.0 ) - dist_p1_sp );
+  }
+  float y_t = (float) (a_f_offset - dist_s_sp - y_offset);
+  float x_t = (float) (dist_sp_0 - x_offset);
+  x_t = x_t / 100.0;
+  y_t = y_t / 100.0;
+  std::cout << "Degree = " << theta2 * 180 / PI << " [x_t, y_t] = [" << x_t << ", " << y_t << "]" << std::endl;
+
+  // publish transform between table and floor
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(x_t, -y_t, 0.0) );
+  tf::Quaternion q;
+  q.setRPY(0, 0, theta2);
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "floor", "table"));
 
 }
+
+laser_geometry::LaserProjection projector_;
+ros::Publisher pub;
+int K = 10;
 
 void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 {
@@ -104,7 +116,6 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 
   if( temp_cloud->height == 1 )
   {
-    ///*
     // filter point within the range x = [-2.2, 0.0], y = [-2.0, 0.0] and x = [0.0, 2.2], y = [-2.0, 0.0]
     pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud_left (new pcl::PointCloud<pcl::PointXYZ>);
     std::vector<pcl::PointXYZ> temp_vector_left;
@@ -154,7 +165,6 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     searchPoint.x = 0.0;
     searchPoint.y = 0.0;
     searchPoint.z = 0.0;
-    int K = 10;
     std::vector<int> pointIdxNKNSearch(K);
     std::vector<float> pointNKNSquaredDistance(K);
 
@@ -175,21 +185,8 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
         final_vector_left.push_back ( temp_point );
         //std::cout << "[" << final_vector_left[i].x << ", " << final_vector_left[i].y << ", " << final_vector_left[i].z << "]; ";
       }
-      if ( point1_x != 0.0)
-      {
-        point1_x = ( point1_x + x_sum/10.0 ) / 2.0;
-      } else
-      {
-        point1_x = x_sum/10.0;
-      }
-      if ( point1_y != 0.0)
-      {
-        point1_y = ( point1_y + y_sum/10.0 ) / 2.0;
-      } else
-      {
-        point1_y = y_sum/10.0;
-      }
-      //std::cout << std::endl;
+      point1_x = x_sum / K;
+      point1_y = y_sum / K;
     }
     //std::cout << final_vector_left.size () << std::endl;
 
@@ -210,24 +207,12 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
         final_vector_right.push_back ( temp_point );
         //std::cout << "[" << final_vector_right[i].x << ", " << final_vector_right[i].y << ", " << final_vector_right[i].z << "]; ";
       }
-      if ( point2_x != 0.0)
-      {
-        point2_x = ( point2_x + x_sum/10.0 ) / 2.0;
-      } else
-      {
-        point2_x = x_sum/10.0;
-      }
-      if ( point2_y != 0.0)
-      {
-        point2_y = ( point2_y + y_sum/10.0 ) / 2.0;
-      } else
-      {
-        point2_y = y_sum/10.0;
-      }
-      //std::cout << std::endl;
+      point2_x = x_sum / K;
+      point2_y = y_sum / K;
     }
     //std::cout << final_vector_right.size () << std::endl;
 
+    // merge temp_cloud_left and temp_cloud_right and publish the point cloud message
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_final (new pcl::PointCloud<pcl::PointXYZ>);
     cloud_final->header.frame_id = "scan";
     cloud_final->width = final_vector_left.size () + final_vector_right.size ();
@@ -244,20 +229,18 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     pcl_conversions::toPCL(ros::Time::now(), cloud_final->header.stamp);
     pub.publish( cloud_final );
 
+    // calculate the central point of the table w.r.t the world frame
+    get_the_central_point();
   }
-
-  //std::cout << "point1 = [" << point1_x << ", " << point1_y << "]; point2 = [" << point2_x << ", " << point2_y << "]" << std::endl;
-  get_the_central_point();
-
 }
 
 int main( int argc, char **argv )
 {
   ros::init( argc, argv, "scan_reader" );
   ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe( "/r2000_driver_node/scan", 10, scanCallback );
-  pub = nh.advertise< pcl::PointCloud< pcl::PointXYZ > >( "points2", 1000 );
-  pub_joint = nh.advertise< sensor_msgs::JointState >( "joint_states", 100 );
+
+  ros::Subscriber sub = nh.subscribe( "/r2000_node/scan", 10, scanCallback );
+  pub = nh.advertise< pcl::PointCloud< pcl::PointXYZ > >( "/scan_reader/points2", 1000 );
   ros::spin();
 
   return 0;
