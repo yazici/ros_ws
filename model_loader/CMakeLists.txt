@@ -32,6 +32,9 @@ include_directories(
 add_executable(scan_reader src/scan_reader.cpp)
 target_link_libraries(scan_reader ${catkin_LIBRARIES})
 
+add_executable(tf_test src/tf_test.cpp)
+target_link_libraries(tf_test ${catkin_LIBRARIES})
+
 add_executable(add_and_remove_object src/add_and_remove_object.cpp)
 target_link_libraries(add_and_remove_object ${catkin_LIBRARIES})
 
