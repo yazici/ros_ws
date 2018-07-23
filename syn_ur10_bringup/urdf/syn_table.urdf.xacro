@@ -4,15 +4,13 @@
   <xacro:arg name="floating_table" default="false" />
 
   <xacro:property name="roomheight" value="3.0" />
-  <xacro:property name="tableheight" value="0.86" />
-  <xacro:property name="tablewidth" value="0.61" />
+  <xacro:property name="tableheight" value="0.83" />
+  <xacro:property name="tablewidth" value="0.83" />
   <xacro:property name="tabledepth" value="0.9" />
-  <xacro:property name="ur10_mount_height" value="0.01" />
-  <xacro:property name="ur10_mount_width" value="0.2" />
-  <xacro:property name="ur10_mount_depth" value="0.2" />
+  <xacro:property name="ur10_mount_offset_y" value="-0.212" />
   <xacro:property name="scan_offset_x" value="0.00" />
-  <xacro:property name="scan_offset_y" value="-0.32" />
-  <xacro:property name="scan_offset_z" value="0.03" />
+  <xacro:property name="scan_offset_y" value="-0.40" />
+  <xacro:property name="scan_offset_z" value="0.095" />
 
   <material name="white">
     <color rgba="1 1 1 1"/>
@@ -55,12 +53,6 @@
     <kd>1.0</kd>
   </gazebo>
 
-  <link name="table_x"/>
-
-  <link name="table_y"/>
-
-  <link name="table_z"/>
-
   <link name="table">
     <inertial>
       <origin xyz="0 0 ${tableheight/2}" />
@@ -93,72 +85,14 @@
 
   <link name="table_top"/>
 
+  <link name="ur10_mount"/>
+
   <link name="scan"/>
 
-  <link name="ur10_mount">
-    <inertial>
-      <origin xyz="0 0 ${ur10_mount_height/2}" />
-      <mass value="2000" />
-      <inertia  ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
-    </inertial>
-    <visual>
-      <material name="lightgray" />
-      <origin xyz="0.0 0.0 ${ur10_mount_height/2}" />
-      <geometry>
-        <box size="${ur10_mount_width} ${ur10_mount_depth} ${ur10_mount_height}" />
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0.0 0.0 ${ur10_mount_height/2}" />
-      <geometry>
-        <box size="${ur10_mount_width} ${ur10_mount_depth} ${ur10_mount_height}" />
-      </geometry>
-    </collision>
-  </link>
-  <gazebo reference="ur10_mount">
-    <material>Gazebo/Blue</material>
-    <turnGravityOff>false</turnGravityOff>
-    <selfCollide>true</selfCollide>
-    <mu1>100.0</mu1>
-    <mu2>100.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>1.0</kd>
-  </gazebo>
-
-  <joint name="table_floor_x_joint" type="prismatic">
+  <joint name="table_floor_joint" type="floating">
     <parent link="floor"/>
-    <child link="table_x"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
-    <axis xyz="1 0 0"/>
-    <limit upper="5" lower="-5" effort="1" velocity="1.00"/>
-  </joint>
-
-  <joint name="table_floor_y_joint" type="prismatic">
-    <parent link="table_x"/>
-    <child link="table_y"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <limit upper="5" lower="-5" effort="1" velocity="1.00"/>
-  </joint>
-
-  <joint name="table_floor_z_joint" type="revolute">
-    <parent link="table_y"/>
-    <child link="table_z"/>
-    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit upper="3.1415926" lower="-3.1415926" effort="2.16" velocity="2.16"/>
-  </joint>
-
-  <joint name="table_z_table_joint" type="fixed">
-    <parent link="table_z"/>
     <child link="table"/>
     <origin xyz="0 0 0" rpy="0 0 0" />
-  </joint>
-
-  <joint name="table_mount_joint" type="fixed">
-    <parent link="table"/>
-    <child link="ur10_mount"/>
-	  <origin xyz="0 -0.16 ${tableheight}" rpy="0 0 0" />
   </joint>
 
   <joint name="table_top_joint" type="fixed">
@@ -167,8 +101,14 @@
 	  <origin xyz="0 0 ${tableheight}" rpy="0 0 0" />
   </joint>
 
-  <joint name="mount_scan_joint" type="fixed">
-    <parent link="ur10_mount"/>
+  <joint name="ur10_mount_table_top_joint" type="fixed">
+    <parent link="table_top"/>
+    <child link="ur10_mount"/>
+	  <origin xyz="0 ${ur10_mount_offset_y} 0" rpy="0 0 0" />
+  </joint>
+
+  <joint name="scan_table_top_joint" type="fixed">
+    <parent link="table_top"/>
     <child link="scan"/>
 	  <origin xyz="${scan_offset_x} ${scan_offset_y} ${scan_offset_z}" rpy="0 0 0" />
   </joint>

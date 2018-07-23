@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tool" >
+
+  <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2900-50_macro.urdf.xacro" />
+
+  <link name="tool_base">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" />
+      <mass value="200" />
+      <inertia  ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+    </inertial>
+    <visual>
+      <material name="lightgray" />
+      <origin xyz="0.0 0.0 0.03725" />
+      <geometry>
+        <box size="0.070 0.0655 0.0705" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.03725" />
+      <geometry>
+        <box size="0.070 0.0655 0.0705" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- scanCONTROL_2900-50  sensor -->
+  <xacro:scanCONTROL_2900-50 prefix="scanCONTROL_2900-50_" parent="tool_base">
+    <origin xyz="0.0617 -0.09003 0.0870" rpy="${radians(0)} ${radians(0)} ${radians(0)}" />
+  </xacro:scanCONTROL_2900-50>
+
+  <link name="camera_plate">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" />
+      <mass value="20" />
+      <inertia  ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+    </inertial>
+    <visual>
+      <material name="lightgray" />
+      <origin xyz="0.0392 -0.0298 0.076" />
+      <geometry>
+        <box size="0.003 0.126 0.132" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0392 -0.0298 0.076" />
+      <geometry>
+        <box size="0.003 0.126 0.132" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tool_base_camera_plate_joint" type="fixed">
+    <parent link="tool_base"/>
+    <child link="camera_plate"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="camera_support">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" />
+      <mass value="20" />
+      <inertia  ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+    </inertial>
+    <visual>
+      <material name="lightgray" />
+      <origin xyz="0.0 0.0 0.0" />
+      <geometry>
+        <cylinder radius="0.003" length="0.0415" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" />
+      <geometry>
+        <cylinder radius="0.003" length="0.0415" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="scanner_link_camera_support_joint" type="fixed">
+    <parent link="scanCONTROL_2900-50_scanner_link"/>
+    <child link="camera_support"/>
+    <origin xyz="0 0.0085 0.032" rpy="0.0 ${radians(90)} 0.0" />
+  </joint>
+
+  <link name="camera_support_2" />
+
+  <joint name="camera_support_2_camera_support_joint" type="fixed">
+    <parent link="camera_support"/>
+    <child link="camera_support_2"/>
+    <origin xyz="0 0.0 0.0208" rpy="0.0 ${radians(0)} ${radians(180)}" />
+  </joint>
+
+  <xacro:include filename="$(find realsense2_camera)/urdf/_r430.urdf.xacro"/>
+
+  <sensor_r430 parent="camera_support_2">
+    <origin xyz="-0.0225 0 0" rpy="0 0 ${radians(90)}"/>
+  </sensor_r430>
+
+</robot>
