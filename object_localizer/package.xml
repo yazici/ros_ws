@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>opencv_test</name>
+  <name>object_localizer</name>
   <version>0.0.0</version>
-  <description>The opencv_test package</description>
+  <description>The object_localizer package</description>
 
-  <maintainer email="yongwang@todo.todo">yongwang</maintainer>
+  <maintainer email="wangyongseu9@gmail.com">yongwang</maintainer>
 
   <license>TODO</license>
 

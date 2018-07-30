@@ -104,8 +104,12 @@ class image_converter:
             output_dict[ 'detection_masks' ] = output_dict[ 'detection_masks' ][ 0 ]
 
         print( output_dict[ 'detection_scores' ][ 0 ] )
-        # if output_dict[ 'detection_scores' ][ 0 ] < 0.5 and output_dict[ 'detection_scores' ][ 0 ] > 0.1:
-        #     output_dict[ 'detection_scores' ][0 ] = 0.51
+        if output_dict[ 'detection_scores' ][ 0 ] < 0.5 and output_dict[ 'detection_scores' ][ 0 ] > 0.1:
+            output_dict[ 'detection_scores' ][0 ] = 0.51
+        # if output_dict[ 'detection_scores' ][ 1 ] < 0.5 and output_dict[ 'detection_scores' ][ 1 ] > 0.1:
+        #     output_dict[ 'detection_scores' ][ 1 ] = 0.51
+        # if output_dict[ 'detection_scores' ][ 2 ] < 0.5 and output_dict[ 'detection_scores' ][ 2 ] > 0.1:
+        #     output_dict[ 'detection_scores' ][ 2 ] = 0.51
 
         # Visualization of the results of a detection.
         vis_util.visualize_boxes_and_labels_on_image_array( image_np,
