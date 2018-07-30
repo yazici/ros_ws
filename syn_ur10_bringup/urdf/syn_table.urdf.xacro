@@ -10,7 +10,7 @@
   <xacro:property name="ur10_mount_offset_y" value="-0.212" />
   <xacro:property name="scan_offset_x" value="0.00" />
   <xacro:property name="scan_offset_y" value="-0.40" />
-  <xacro:property name="scan_offset_z" value="0.095" />
+  <xacro:property name="scan_offset_z" value="0.06" />
 
   <material name="white">
     <color rgba="1 1 1 1"/>
@@ -87,7 +87,26 @@
 
   <link name="ur10_mount"/>
 
-  <link name="scan"/>
+  <link name="scan">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" />
+      <mass value="200" />
+      <inertia  ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+    </inertial>
+    <visual>
+      <material name="lightgray" />
+      <origin xyz="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.10 0.10 0.12" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.10 0.10 0.12" />
+      </geometry>
+    </collision>
+  </link>
 
   <joint name="table_floor_joint" type="floating">
     <parent link="floor"/>

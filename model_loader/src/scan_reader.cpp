@@ -27,22 +27,62 @@
 #include <geometry_msgs/TransformStamped.h>
 
 int msg_counter = 0;
+
 float point1_x = 0.0;
 float point1_y = 0.0;
 float point2_x = 0.0;
 float point2_y = 0.0;
+
+float point1_x_o = 1000000.0;
+float point1_y_o = 1000000.0;
+float point2_x_o = 1000000.0;
+float point2_y_o = 1000000.0;
+
 float a_f_offset = 156; //cm
 float scan_offset = 40; //cm
-float old_x = 10000.0; //cm
-float old_y = 10000.0; //cm
+float old_x_t = 10000.0; //cm
+float old_y_t = 10000.0; //cm
+float old_theta2 = 100.0;
 
 void get_the_central_point()
 {
   // from meter to millimeter
   float x1 = std::round( point1_x * 100.0 );
+  if ( point1_x_o == 1000000.0 )
+  {
+    point1_x_o = x1;
+  } else
+  {
+    x1 = ( point1_x_o + x1 ) / 2.0;
+    point1_x_o = x1;
+  }
   float y1 = std::round( point1_y * 100.0 );
+  if ( point1_y_o == 1000000.0 )
+  {
+    point1_y_o = y1;
+  } else
+  {
+    y1 = ( point1_y_o + y1 ) / 2.0;
+    point1_y_o = y1;
+  }
   float x2 = std::round( point2_x * 100.0 );
+  if ( point2_x_o == 1000000.0 )
+  {
+    point2_x_o = x2;
+  } else
+  {
+    x2 = ( point2_x_o + x2 ) / 2.0;
+    point2_x_o = x2;
+  }
   float y2 = std::round( point2_y * 100.0 );
+  if ( point2_y_o == 1000000.0 )
+  {
+    point2_y_o = y2;
+  } else
+  {
+    y2 = ( point2_y_o + y2 ) / 2.0;
+    point2_y_o = y2;
+  }
   float dist_p1_p2 = std::sqrt( std::pow( x1 - x2, 2 ) + std::pow( y1 - y2, 2 ) );
   // ROS_INFO_STREAM ( "Point1 (p1): [" << x1 << ", " << y1 << "], point2 (p2): [" << x2 << ", " << y2 << "]; Dist(p1, p2):" << dist_p1_p2 );
 
@@ -65,6 +105,10 @@ void get_the_central_point()
   float v_s_sp_y = v_p1_s_y - v_p1_sp_y;
   double theta = std::atan2( v_s_sp_y, v_s_sp_x );
   double theta2 = ( PI / 2.0 ) - theta;
+  if ( old_theta2 == 100.0 )
+  {
+    old_theta2 = theta2;
+  }
   double x_offset = std::sin( theta2 ) * scan_offset;
   double y_offset = std::cos( theta2 ) * scan_offset;
   // std::cout << "Degree = " << theta * 180 / PI << " [x_offset, y_offset] = [" << x_offset << ", " << y_offset << "]" << std::endl;
@@ -78,20 +122,44 @@ void get_the_central_point()
   {
     dist_sp_0 = - ( ( dist_p1_p2 / 2.0 ) - dist_p1_sp );
   }
-  float y_t = (float) (a_f_offset - dist_s_sp - y_offset);
   float x_t = (float) (dist_sp_0 - x_offset);
+  float y_t = (float) (a_f_offset - dist_s_sp - y_offset);
+
   x_t = x_t / 100.0;
   y_t = y_t / 100.0;
+
+  if ( old_x_t == 10000.0 )
+  {
+    old_x_t = x_t;
+  }
+
+  if ( old_y_t == 10000.0 )
+  {
+    old_y_t = y_t;
+  }
+
   std::cout << "Degree = " << theta2 * 180 / PI << " [x_t, y_t] = [" << x_t << ", " << y_t << "]" << std::endl;
 
   // publish transform between table and floor
   static tf::TransformBroadcaster br;
   tf::Transform transform;
-  transform.setOrigin( tf::Vector3(x_t, -y_t, 0.0) );
-  tf::Quaternion q;
-  q.setRPY(0, 0, theta2);
-  transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "floor", "table"));
+  if ( std::abs( old_x_t - x_t ) > 0.05 || std::abs( old_y_t - y_t ) > 0.05 || std::abs( old_theta2 - theta2 ) * 180 / PI > 2 )
+  {
+    transform.setOrigin( tf::Vector3(x_t, -y_t, 0.0) );
+    tf::Quaternion q;
+    q.setRPY( 0, 0, theta2 );
+    transform.setRotation( q );
+    old_x_t = x_t;
+    old_y_t = y_t;
+    old_theta2 = theta2;
+  } else
+  {
+    transform.setOrigin( tf::Vector3( old_x_t, -old_y_t, 0.0 ) );
+    tf::Quaternion q;
+    q.setRPY( 0, 0, old_theta2 );
+    transform.setRotation( q );
+  }
+  br.sendTransform( tf::StampedTransform(transform, ros::Time::now(), "floor", "table") );
 
 }
 

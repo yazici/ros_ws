@@ -1,5 +1,5 @@
 controller_list:
-  - name: fake_manipulator_controller
+  - name: fake_arm_controller
     joints:
       - ur10_shoulder_pan_joint
       - ur10_shoulder_lift_joint
@@ -7,6 +7,19 @@ controller_list:
       - ur10_wrist_1_joint
       - ur10_wrist_2_joint
       - ur10_wrist_3_joint
-  - name: fake_endeffector_controller
+  - name: fake_camera_controller
     joints:
-      []
+      - ur10_shoulder_pan_joint
+      - ur10_shoulder_lift_joint
+      - ur10_elbow_joint
+      - ur10_wrist_1_joint
+      - ur10_wrist_2_joint
+      - ur10_wrist_3_joint
+  - name: fake_me_2900_controller
+    joints:
+      - ur10_shoulder_pan_joint
+      - ur10_shoulder_lift_joint
+      - ur10_elbow_joint
+      - ur10_wrist_1_joint
+      - ur10_wrist_2_joint
+      - ur10_wrist_3_joint

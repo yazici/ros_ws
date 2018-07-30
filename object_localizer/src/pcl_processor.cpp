@@ -8,8 +8,8 @@
 
 // converse header file between ros points2 and pcl point cloud
 #include <pcl_conversions/pcl_conversions.h>
-#include "opencv_test/BBox_list.h"
 #include "opencv_test/BBox.h"
+#include "opencv_test/BBox_list.h"
 
 // PCL head files
 #include <pcl_ros/point_cloud.h>
