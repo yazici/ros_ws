@@ -12,12 +12,17 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
 
+<<<<<<< HEAD
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
 #include <cmath>
 
 #include <vector>
 
+=======
+#include <cmath>
+
+>>>>>>> 637f1af354450c87a7182e3a7035b73f2f10a831
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "motion_control");
@@ -94,8 +99,13 @@ int main(int argc, char** argv)
       // z: -0.557796409466
       // w: 0.568968361794
       target_pose1.position.x = -0.270567446638;
+<<<<<<< HEAD
       target_pose1.position.y = -0.923357894959;
       target_pose1.position.z = 1.46762397584;
+=======
+      target_pose1.position.y = -0.633357894959;
+      target_pose1.position.z = 1.44762397584;
+>>>>>>> 637f1af354450c87a7182e3a7035b73f2f10a831
       target_pose1.orientation.x = 0.429557969934;
       target_pose1.orientation.y = 0.424991905019;
       target_pose1.orientation.z = -0.557796409466;
@@ -111,6 +121,7 @@ int main(int argc, char** argv)
         move_group.setMaxVelocityScalingFactor(0.1);
         move_group.move();
       }
+<<<<<<< HEAD
 
       // start scanning the part
       std::vector<geometry_msgs::Pose> waypoints;
@@ -147,6 +158,8 @@ int main(int argc, char** argv)
         my_plan.trajectory_ = trajectory;
         move_group.execute(my_plan);
       }
+=======
+>>>>>>> 637f1af354450c87a7182e3a7035b73f2f10a831
     }
     //*/
     x_o = x_n;
