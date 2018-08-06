@@ -26,10 +26,12 @@ from object_detection.utils import visualization_utils as vis_util
 from opencv_test.msg import BBox_list
 from opencv_test.msg import BBox
 
+threshold = 0.9
+
 ######################################################################################################
 # set path to detection_graph and load it
-# exported_graphs_355341 exported_graphs_200000
-MODEL_DIR = '/home/syn/ObjectRecognition/Data/Object/models/model/exported_graphs_200000'
+graph_name = 'exported_graphs_355341' # exported_graphs_355341 exported_graphs_200000
+MODEL_DIR = '/home/syn/ObjectRecognition/Data/Object/models/model/' + graph_name
 PATH_TO_CKPT = MODEL_DIR + '/frozen_inference_graph.pb'
 detection_graph = tf.Graph()
 with detection_graph.as_default():
@@ -38,6 +40,7 @@ with detection_graph.as_default():
         serialized_graph = fid.read()
         od_graph_def.ParseFromString( serialized_graph )
         tf.import_graph_def( od_graph_def, name='' )
+print( '***load saved graph from ', MODEL_DIR )
 
 # list of the strings that is used to add correct label for each box.
 PATH_TO_LABELS = '/home/syn/ObjectRecognition/Data/Object/data/object_map.pbtxt'
@@ -45,7 +48,7 @@ NUM_CLASSES = 1
 label_map = label_map_util.load_labelmap( PATH_TO_LABELS )
 categories = label_map_util.convert_label_map_to_categories( label_map, max_num_classes = NUM_CLASSES, use_display_name = True )
 category_index = label_map_util.create_category_index( categories )
-print( type( category_index ), category_index )
+print( '***load category_index [', type( category_index ), ']:', category_index )
 #######################################################################################################
 # create a tensorflow session for detection_graph
 sess = tf.Session( graph = detection_graph )
@@ -60,8 +63,8 @@ with detection_graph.as_default():
         tensor_name = key + ':0'
         if tensor_name in all_tensor_names:
             tensor_dict[ key ] = tf.get_default_graph().get_tensor_by_name( tensor_name )
-            print( 'Add [', tensor_name, '] to tensor_dict' )
-print ( type( image_tensor ), type( tensor_dict ) )
+            print( '***Add [', tensor_name, '] to tensor_dict' )
+# print ( type( image_tensor ), type( tensor_dict ) )
 #######################################################################################################
 class image_converter:
 
@@ -69,7 +72,7 @@ class image_converter:
         self.image_pub = rospy.Publisher( "/object_localizer/localize_image", Image, queue_size = 100 )
         self.bbox_pub = rospy.Publisher( "/object_localizer/bbox_list", BBox_list, queue_size = 100 )
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber( "/camera/color/image_rect_color", Image, self.image_callback )
+        self.image_sub = rospy.Subscriber( "/camera/color/image_raw", Image, self.image_callback )
         # self.cloud_sub = rospy.Subscriber( "/camera/depth_registered/points", PointCloud2, self.cloud_callback )
 
     # def cloud_callback( self, data ):
@@ -80,6 +83,7 @@ class image_converter:
     #     print( 'The point cloud has height =', height, 'width =', width )
 
     def image_callback( self, data ):
+        # print( 'Receive image at time:', data.header.stamp )
         try:
             image_np = self.bridge.imgmsg_to_cv2( data, "rgb8" )
         except CvBridgeError as e:
@@ -103,9 +107,10 @@ class image_converter:
         if 'detection_masks' in output_dict:
             output_dict[ 'detection_masks' ] = output_dict[ 'detection_masks' ][ 0 ]
 
-        print( output_dict[ 'detection_scores' ][ 0 ] )
-        if output_dict[ 'detection_scores' ][ 0 ] < 0.5 and output_dict[ 'detection_scores' ][ 0 ] > 0.1:
-            output_dict[ 'detection_scores' ][0 ] = 0.51
+        output_dict[ 'detection_scores' ][ output_dict[ 'detection_scores' ] < threshold ] = 0.0
+        print( output_dict[ 'detection_scores' ][ output_dict[ 'detection_scores' ] > threshold ] )
+        # if output_dict[ 'detection_scores' ][ 0 ] < 0.5 and output_dict[ 'detection_scores' ][ 0 ] > 0.1:
+        #     output_dict[ 'detection_scores' ][0 ] = 0.51
         # if output_dict[ 'detection_scores' ][ 1 ] < 0.5 and output_dict[ 'detection_scores' ][ 1 ] > 0.1:
         #     output_dict[ 'detection_scores' ][ 1 ] = 0.51
         # if output_dict[ 'detection_scores' ][ 2 ] < 0.5 and output_dict[ 'detection_scores' ][ 2 ] > 0.1:
@@ -119,12 +124,11 @@ class image_converter:
                                                             category_index,
                                                             instance_masks = output_dict.get( 'detection_masks' ),
                                                             use_normalized_coordinates = True,
-                                                            line_thickness = 8 )
+                                                            line_thickness = 6 )
 
         # Publish the bounding box list messages
-        # Filter out bounding boxs have confidence score less than 0.9
-        result_box = output_dict[ 'detection_boxes' ][output_dict[ 'detection_scores' ] > 0.9, :]
-
+        # Filter out bounding boxs have confidence score less than 0.99
+        result_box = output_dict[ 'detection_boxes' ][ output_dict[ 'detection_scores' ] > threshold, : ]
         xmin = result_box[:, 0]
         xmax = result_box[:, 2]
         ymin = result_box[:, 1]

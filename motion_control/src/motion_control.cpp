@@ -12,7 +12,11 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
 
+#include <moveit/trajectory_processing/iterative_time_parameterization.h>
+
 #include <cmath>
+
+#include <vector>
 
 int main(int argc, char** argv)
 {
@@ -90,8 +94,8 @@ int main(int argc, char** argv)
       // z: -0.557796409466
       // w: 0.568968361794
       target_pose1.position.x = -0.270567446638;
-      target_pose1.position.y = -0.633357894959;
-      target_pose1.position.z = 1.44762397584;
+      target_pose1.position.y = -0.923357894959;
+      target_pose1.position.z = 1.46762397584;
       target_pose1.orientation.x = 0.429557969934;
       target_pose1.orientation.y = 0.424991905019;
       target_pose1.orientation.z = -0.557796409466;
@@ -106,6 +110,42 @@ int main(int argc, char** argv)
       {
         move_group.setMaxVelocityScalingFactor(0.1);
         move_group.move();
+      }
+
+      // start scanning the part
+      std::vector<geometry_msgs::Pose> waypoints;
+      waypoints.push_back(target_pose1);
+
+      geometry_msgs::Pose target_pose2 = target_pose1;
+      target_pose2.position.z += 0.15;
+      waypoints.push_back(target_pose2);
+
+      geometry_msgs::Pose target_pose3 = target_pose2;
+      target_pose3.position.z -= 0.15;
+      waypoints.push_back(target_pose3);
+
+      move_group.setMaxVelocityScalingFactor(0.1);
+
+      // We want the Cartesian path to be interpolated at a resolution of 1 cm
+      // which is why we will specify 0.01 as the max step in Cartesian
+      // translation.  We will specify the jump threshold as 0.0, effectively disabling it.
+      // Warning - disabling the jump threshold while operating real hardware can cause
+      // large unpredictable motions of redundant joints and could be a safety issue
+      moveit_msgs::RobotTrajectory trajectory;
+      const double jump_threshold = 0.0;
+      const double eef_step = 0.01;
+      double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+      ROS_INFO_NAMED("scan", "scan plan (Cartesian path) (%.2f%% acheived)", fraction * 100.0);
+
+      robot_trajectory::RobotTrajectory rt( move_group.getCurrentState()->getRobotModel(), "camera" );
+      rt.setRobotTrajectoryMsg( *move_group.getCurrentState(), trajectory );
+      trajectory_processing::IterativeParabolicTimeParameterization iptp;
+      success = iptp.computeTimeStamps(rt);
+      if ( success )
+      {
+        rt.getRobotTrajectoryMsg( trajectory );
+        my_plan.trajectory_ = trajectory;
+        move_group.execute(my_plan);
       }
     }
     //*/

@@ -44,6 +44,8 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
+add_executable(rough_localizer src/rough_localizer.cpp)
+target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(pcl_processor src/pcl_processor.cpp)
-target_link_libraries(pcl_processor ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS})
+add_executable(pcl_merger src/pcl_merger.cpp)
+target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
