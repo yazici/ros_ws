@@ -24,7 +24,6 @@
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 std::string camera_frame = "camera_depth_optical_frame";
-
 ros::Time sample_time;
 
 // function used to show the merged point cloud and calculated surface normal
@@ -78,45 +77,10 @@ void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 	std::printf( "Downsampled cloud size is %d, %d\n", cloud_sampled->width, cloud_sampled->height );
 }
 
-void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out )
-{
-	static tf::TransformListener listener( ros::Duration(20), true );
-  tf::StampedTransform transform;
-	try
-	{
-    listener.lookupTransform( "world", "camera_depth_optical_frame", sample_time, transform ); // ros::Time(0) or sample_time
-		std::cout << "tf time difference is " << ros::Time::now() - sample_time << std::endl;
-		// float x_n = transform.getOrigin().x();
-    // float y_n = transform.getOrigin().y();
-		// float z_n = transform.getOrigin().z();
-    // tf::Vector3 axis_n = transform.getRotation().getAxis();
-    // float angle_n = transform.getRotation().getAngle();
-    // ROS_INFO_STREAM ( "[x_n, y_n, z_n]: [" << x_n << ", " << y_n << ", " << z_n << "] axis_n: [" << axis_n.getX() << ", " << axis_n.getY() << ", " << axis_n.getZ() << "], angle_n = " << angle_n );
-		tf::Vector3 point(0, 0, 0);
-		tf::Vector3 point_n(0, 0, 0);
-		std::cout << "input point cloud has " << cloud->size() << " points" << std::endl;
-		for ( PointT temp_point : cloud->points )
-	 	{
-		 	point.setX( temp_point.x );
-			point.setY( temp_point.y );
-			point.setZ( temp_point.z );
-			tf::Vector3 point_n = transform * point;
-			temp_point.x = point_n.getX();
-			temp_point.y = point_n.getY();
-			temp_point.z = point_n.getZ();
-			cloud_out->points.push_back (temp_point);
-	 	}
-  }
-  catch ( tf::TransformException ex )
-  {
-    ROS_ERROR("%s", ex.what());
-  }
-}
-
 // function for merging point cloud
 int MergePointclouds ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr cloud_icp )
 {
-	//filter to remove outliers
+	// filter to remove outliers
 	// filterOutliner ( cloud_in );
 	// filterOutliner ( cloud_icp );
 
@@ -124,19 +88,18 @@ int MergePointclouds ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr cloud_icp )
   int iterations = 20;
 	pcl::IterativeClosestPoint< PointT, PointT > icp;
 	icp.setMaximumIterations( iterations );
-
 	//using ICP algorithm to merge two point clouds
-	std::printf("Applying ICP...");
-	icp.setInputSource(cloud_in);
-	icp.setInputTarget(cloud_icp);
-	icp.align(*cloud_in);
+	std::printf( "Applying ICP..." );
+	icp.setInputSource( cloud_in );
+	icp.setInputTarget( cloud_icp );
+	icp.align( *cloud_in );
 
   if ( icp.hasConverged() )
   {
-    std::printf("\nICP has converged, score is %+.0e\n", icp.getFitnessScore());
+    std::printf( "\nICP has converged, score is %+.0e\n", icp.getFitnessScore() );
 	} else
   {
-		PCL_ERROR("\nICP has not converged.\n");
+		PCL_ERROR( "\nICP has not converged.\n" );
 		return -1;
 	}
 
@@ -185,9 +148,62 @@ int MergePointclouds ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr cloud_icp )
 
 }
 
+void pointCloud_Merge_test ()
+{
+	// Define original point cloud and load the ply file to original point cloud
+  PointCloudT::Ptr cloud_in 	(new PointCloudT);
+  if ( pcl::io::loadPLYFile ( "/home/syn/ros_ws/src/object_localizer/data/octopus1.ply", *cloud_in ) == -1)
+  {
+    PCL_ERROR ( "Couldn't read file octopus1.pcd \n" );
+    return;
+  }
+  std::cout << "Loaded " << cloud_in->width * cloud_in->height << " data points from octopus1.ply" << std::endl;
+
+	// Define ICP output point cloud and load the ply file to ICP output point cloud
+	PointCloudT::Ptr cloud_icp	(new PointCloudT);
+  if ( pcl::io::loadPLYFile ( "/home/syn/ros_ws/src/object_localizer/data/octopus2.ply", *cloud_icp ) == -1)
+  {
+    PCL_ERROR ( "Couldn't read file octopus2.pcd \n" );
+    return;
+  }
+  std::cout << "Loaded " << cloud_icp->width * cloud_icp->height << " data points from octopus2.ply" << std::endl;
+
+	// Merge original point cloud to output point cloud
+  MergePointclouds( cloud_in, cloud_icp );
+}
+
+void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out )
+{
+	static tf::TransformListener listener( ros::Duration(20), true );
+  tf::StampedTransform transform;
+	try
+	{
+		// ros::Time(0) or sample_time
+    listener.lookupTransform( "world", "camera_depth_optical_frame", sample_time, transform );
+		std::cout << "tf time difference is " << ros::Time::now() - sample_time << std::endl;
+		tf::Vector3 point(0, 0, 0);
+		tf::Vector3 point_n(0, 0, 0);
+		std::cout << "input point cloud has " << cloud->size() << " points" << std::endl;
+		for ( PointT temp_point : cloud->points )
+	 	{
+		 	point.setX( temp_point.x );
+			point.setY( temp_point.y );
+			point.setZ( temp_point.z );
+			tf::Vector3 point_n = transform * point;
+			temp_point.x = point_n.getX();
+			temp_point.y = point_n.getY();
+			temp_point.z = point_n.getZ();
+			cloud_out->points.push_back (temp_point);
+	 	}
+  }
+  catch ( tf::TransformException ex )
+  {
+    ROS_ERROR("%s", ex.what());
+  }
+}
+
 class PointCloudMerger
 {
-
 public:
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
@@ -267,41 +283,6 @@ int main ( int argc, char** argv )
   ros::NodeHandle n;
 	PointCloudMerger pcm;
 	ros::spin ();
-
-	/*
-  PointCloudT::Ptr cloud_in 	(new PointCloudT); // Original point cloud
-	PointCloudT::Ptr cloud_icp	(new PointCloudT); // ICP output point cloud
-
-  // load the ply file
-  if ( pcl::io::loadPLYFile ( "/home/syn/ros_ws/src/object_localizer/data/octopus1.ply", *cloud_in ) == -1)
-  {
-    PCL_ERROR ( "Couldn't read file octopus1.pcd \n" );
-    return ( -1 );
-  }
-  std::cout << "Loaded " << cloud_in->width * cloud_in->height << " data points from octopus1.ply" << std::endl;
-
-  if ( pcl::io::loadPLYFile ( "/home/syn/ros_ws/src/object_localizer/data/octopus2.ply", *cloud_icp ) == -1)
-  {
-    PCL_ERROR ( "Couldn't read file octopus2.pcd \n" );
-    return ( -1 );
-  }
-  std::cout << "Loaded " << cloud_icp->width * cloud_icp->height << " data points from octopus2.ply" << std::endl;
-  // for ( size_t i = 0; i < cloud->points.size (); ++i )
-  // {
-  //   std::cout << "    " << cloud->points[i].x
-  //             << " "    << cloud->points[i].y
-  //             << " "    << cloud->points[i].z << std::endl;
-  // }
-
-  // show the point cloud
-  // pcl::visualization::CloudViewer viewer ( "Cloud Viewer" );
-  // viewer.showCloud ( cloud );
-  // while ( !viewer.wasStopped () )
-  // {
-  // }
-  MergePointclouds( cloud_in, cloud_icp );
-	*/
-
-	// ros::shutdown();
+	ros::shutdown();
   return 0;
 }
