@@ -10,7 +10,7 @@ roscore
     //roslaunch kinect2_bridge kinect2_bridge.launch
 roslaunch realsense2_camera rs_rgbd.launch
   or
-rosbag play /home/syn/ros_ws/src/object_localizer/bag/2018-07-30-15-56-23.bag
+rosbag play /home/syn/bag/2018-07-30-15-56-23.bag
 
 rosrun rviz rviz
 
