@@ -23,8 +23,9 @@ from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
 # print( sys.path )
 
-from opencv_test.msg import BBox_list
-from opencv_test.msg import BBox
+from object_localizer_msg.msg import BBox_list
+from object_localizer_msg.msg import BBox_int
+from object_localizer_msg.msg import BBox_float
 
 threshold = 0.9
 
@@ -138,15 +139,15 @@ class image_converter:
 
         bbox_list = BBox_list()
         # print(type(bbox_list.BBox_list))
+        bbox_list.header.frame_id = data.header.frame_id
+        bbox_list.header.stamp = data.header.stamp
         for idx, value in enumerate(x1):
-            new_bbox = BBox()
+            new_bbox = BBox_int()
             new_bbox.x1 = int( value )
             new_bbox.x2 = int( x2[idx] )
             new_bbox.y1 = int( y1[idx] )
             new_bbox.y2 = int( y2[idx] )
-            bbox_list.BBox_list.append( new_bbox )
-            bbox_list.header.frame_id = data.header.frame_id
-            bbox_list.header.stamp = data.header.stamp
+            bbox_list.BBox_list_int.append( new_bbox )
         self.bbox_pub.publish( bbox_list )
         ###########################################################################################
 

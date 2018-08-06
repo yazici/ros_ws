@@ -4,6 +4,8 @@ http://pointclouds.org/documentation/tutorials/planar_segmentation.php
 
 roscore
 
+rosrun rviz rviz
+
 //launch file for sensors: like  CamBoard pico flexx, realsense, zed, and kinect2
     //roslaunch pico_flexx_driver pico_flexx_driver.launch publish_tf:=true
     //roslaunch zed_wrapper display.launch
@@ -11,8 +13,6 @@ roscore
 roslaunch realsense2_camera rs_rgbd.launch
   or
 rosbag play /home/syn/bag/2018-07-30-15-56-23.bag
-
-rosrun rviz rviz
 
 cd /home/syn/ros_ws/src/object_localizer/src
 ./object_detector.py

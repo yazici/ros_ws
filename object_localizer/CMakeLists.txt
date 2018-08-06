@@ -16,26 +16,14 @@ find_package( catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   image_transport
-  message_generation
-)
-
-add_message_files(
-  FILES
-  BBox.msg
-  BBox_list.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs
+  object_localizer_msg
 )
 
 catkin_package(
   #  INCLUDE_DIRS include
-  #  LIBRARIES opencv_test
+  #  LIBRARIES object_localizer
   #  CATKIN_DEPENDS roscpp rospy std_msgs
   #  DEPENDS system_lib
-  CATKIN_DEPENDS message_runtime
 )
 
 include_directories(
