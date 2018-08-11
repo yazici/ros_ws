@@ -27,15 +27,14 @@ from object_localizer_msg.msg import BBox_list
 from object_localizer_msg.msg import BBox_int
 from object_localizer_msg.msg import BBox_float
 
-threshold = 0.9
+threshold = 0.95
 
 ######################################################################################################
 # set path to detection_graph and load it
 import rospkg
 
 rospack = rospkg.RosPack()
-MODEL_DIR = rospack.get_path('object_localizer') + '/model'
-PATH_TO_CKPT = MODEL_DIR + '/frozen_inference_graph.pb'
+PATH_TO_CKPT = rospack.get_path('object_localizer') + '/model/frozen_inference_graph.pb'
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
@@ -43,10 +42,10 @@ with detection_graph.as_default():
         serialized_graph = fid.read()
         od_graph_def.ParseFromString( serialized_graph )
         tf.import_graph_def( od_graph_def, name='' )
-print( '***load saved graph from ', MODEL_DIR )
+print( '***load saved graph from: ', PATH_TO_CKPT )
 
 # list of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = '/home/syn/ObjectRecognition/Data/Object/data/object_map.pbtxt'
+PATH_TO_LABELS = rospack.get_path('object_localizer') + '/model/object_map.pbtxt'
 NUM_CLASSES = 1
 label_map = label_map_util.load_labelmap( PATH_TO_LABELS )
 categories = label_map_util.convert_label_map_to_categories( label_map, max_num_classes = NUM_CLASSES, use_display_name = True )
