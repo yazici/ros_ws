@@ -32,8 +32,11 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
+add_executable(pcl_merger src/pcl_merger.cpp)
+target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(rough_localizer src/rough_localizer.cpp)
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(pcl_merger src/pcl_merger.cpp)
-target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable(box_segmenter src/box_segmenter.cpp)
+target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})

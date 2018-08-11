@@ -25,6 +25,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 
+// boost geometry head files
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <vector>
@@ -171,7 +172,7 @@ public:
       tf::StampedTransform transform;
       try
       {
-        tf_listener.lookupTransform( "world", "camera_depth_optical_frame", sample_time, transform );
+        tf_listener.lookupTransform( "world", camera_frame, sample_time, transform );
         std::cout << "Sample time for tf is " << sample_time << std::endl;
         std::cout << "Scene cloud has [frame_id, width, height]: " << saved_cloud->header.frame_id << ", " << saved_cloud->width << ", " << saved_cloud->height << std::endl;
         tf::Vector3 point(0, 0, 0);

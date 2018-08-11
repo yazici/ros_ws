@@ -14,7 +14,6 @@
 
 #include <pcl/io/ply_io.h>
 #include <pcl/point_types.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/registration/icp.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/filters/statistical_outlier_removal.h>
@@ -72,7 +71,7 @@ void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 	// std::printf( "Downsampling point clouds...\n" );
   static pcl::VoxelGrid<pcl::PointXYZRGB> grid;
   grid.setInputCloud ( cloud );
-  grid.setLeafSize ( 0.005f, 0.005f, 0.005f );
+  grid.setLeafSize ( 0.005f, 0.005f, 0.05f );
   grid.filter ( *cloud_sampled );
 	std::printf( "Downsampled cloud size is %d, %d\n", cloud_sampled->width, cloud_sampled->height );
 }
@@ -107,7 +106,7 @@ int MergePointclouds ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr cloud_icp )
 	*cloud_icp += *cloud_in;
 
 	//all files are processed, ICP is done
-	std::printf( "ICP finishe. Merged point cloud size is %d\n", cloud_icp->size() );
+	std::printf( "ICP finishe. Merged point cloud size is %lu\n", cloud_icp->size() );
 
 	// save data
 	/*
@@ -141,11 +140,10 @@ int MergePointclouds ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr cloud_icp )
   ne.compute ( *cloud_normals );
 
 	// cloud_normals->points.size () should have the same size as the input cloud->points.size ()*
-	std::printf( "cloud size: %d; normals size: %d\n", cloud_filtered->points.size(), cloud_normals->points.size() );
+	std::printf( "cloud size: %lu; normals size: %lu\n", cloud_filtered->points.size(), cloud_normals->points.size() );
   std::printf( "Visualizing point clouds...\n" );
 	Visualize( cloud_filtered, cloud_normals );
 	*/
-
 }
 
 void pointCloud_Merge_test ()
@@ -179,7 +177,7 @@ void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out 
 	try
 	{
 		// ros::Time(0) or sample_time
-    listener.lookupTransform( "world", "camera_depth_optical_frame", sample_time, transform );
+    listener.lookupTransform( "world", camera_frame, sample_time, transform );
 		std::cout << "tf time difference is " << ros::Time::now() - sample_time << std::endl;
 		tf::Vector3 point(0, 0, 0);
 		tf::Vector3 point_n(0, 0, 0);
@@ -227,11 +225,11 @@ public:
 		PointCloudT::Ptr scene_cloud_world	(new PointCloudT);
 		transform_point_cloud ( scene_cloud_sampled, scene_cloud_world );
 		std::cout << "output point cloud has " << scene_cloud_world->size()  << std::endl;
-		if ( scene_cloud_world->size() > 10000 )
-		{
-			std::cout << "scene_cloud_world is too large to merge" << std::endl;
-			return;
-		}
+		// if ( scene_cloud_world->size() > 10000 )
+		// {
+		// 	std::cout << "scene_cloud_world is too large to merge" << std::endl;
+		// 	return;
+		// }
 
 		*scene_cloud_total += *scene_cloud_world;
 		// if ( scene_cloud_total->size() == 0 )
@@ -258,11 +256,11 @@ public:
   {
     cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &PointCloudMerger::cloud_cb, this );
     std::string r_ct = nh_.resolveName ( cloud_topic_ );
-    ROS_INFO_STREAM ( "Listening for incoming point cloud on topic " << r_ct );
+    ROS_INFO_STREAM ( "Listening point cloud message on topic " << r_ct );
 
     std::string p_ct = "/point_cloud_merger/points";
     cloud_pub_ = nh_.advertise < PointCloudT > ( p_ct, 30 );
-    ROS_INFO_STREAM ( "publish point cloud message on topic " << p_ct );
+    ROS_INFO_STREAM ( "publishing point cloud message on topic " << p_ct );
   }
 
   ~PointCloudMerger () { }

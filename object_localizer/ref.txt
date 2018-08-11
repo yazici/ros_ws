@@ -20,3 +20,5 @@ cd /home/syn/ros_ws/src/object_localizer/src
 rosrun object_localizer rough_localizer
 
 rosrun object_localizer pcl_merger
+
+rosrun object_localizer box_segmenter

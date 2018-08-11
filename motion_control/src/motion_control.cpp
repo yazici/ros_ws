@@ -94,7 +94,7 @@ int main(int argc, char** argv)
       // z: -0.557796409466
       // w: 0.568968361794
       target_pose1.position.x = -0.270567446638;
-      target_pose1.position.y = -0.923357894959;
+      target_pose1.position.y = -1.163357894959;
       target_pose1.position.z = 1.46762397584;
       target_pose1.orientation.x = 0.429557969934;
       target_pose1.orientation.y = 0.424991905019;

@@ -31,8 +31,10 @@ threshold = 0.9
 
 ######################################################################################################
 # set path to detection_graph and load it
-graph_name = 'exported_graphs_355341' # exported_graphs_355341 exported_graphs_200000
-MODEL_DIR = '/home/syn/ObjectRecognition/Data/Object/models/model/' + graph_name
+import rospkg
+
+rospack = rospkg.RosPack()
+MODEL_DIR = rospack.get_path('object_localizer') + '/model'
 PATH_TO_CKPT = MODEL_DIR + '/frozen_inference_graph.pb'
 detection_graph = tf.Graph()
 with detection_graph.as_default():

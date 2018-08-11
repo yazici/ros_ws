@@ -193,7 +193,7 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     int point_counter_right = 0;
     for( pcl::PointXYZ temp_point : temp_cloud->points )
     {
-        if( temp_point.y > -2 && temp_point.y < 0.0 )
+        if( temp_point.y > -2 && temp_point.y < -0.2 )
         {
           if ( temp_point.x > -2.2 && temp_point.x < 0.0 )
           {
