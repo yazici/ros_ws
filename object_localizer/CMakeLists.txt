@@ -40,3 +40,6 @@ target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(box_segmenter src/box_segmenter.cpp)
 target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(scan_planner src/scan_planner.cpp)
+target_link_libraries(scan_planner ${catkin_LIBRARIES} ${Boost_LIBRARIES})

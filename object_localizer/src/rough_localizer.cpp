@@ -221,11 +221,14 @@ public:
               box_point_counter++;
             }
           }
-          std::cout << "box point size: " << box_point_counter << "; range of x is [" << box_min_x << ", " << box_max_x << "];"
-                    << " range of y is [" << box_min_y << ", " << box_max_y << "]" << std::endl;
-          box_t_b box_n { {box_min_x, box_min_y}, {box_max_x, box_max_y} } ;
-          print_box_t_b( box_n );
-          handle_box_tb( box_n );
+
+          if ( box_point_counter > 0 )
+          {
+            std::cout << "box point size: " << box_point_counter << "; range of x is [" << box_min_x << ", " << box_max_x << "];" << " range of y is [" << box_min_y << ", " << box_max_y << "]" << std::endl;
+            box_t_b box_n { {box_min_x, box_min_y}, {box_max_x, box_max_y} } ;
+            print_box_t_b ( box_n );
+            handle_box_tb ( box_n );
+          }
         }
         // show the box_t_b_list;
         print_box_t_b_list();
@@ -234,7 +237,7 @@ public:
 
         cropped_cloud->width = point_counter;
         cropped_cloud->height = 1;
-        PointCloudT::Ptr cropped_cloud_sampled	(new PointCloudT);
+        PointCloudT::Ptr cropped_cloud_sampled	( new PointCloudT );
         downSampling ( cropped_cloud, cropped_cloud_sampled );
         std::cout << "cropped_cloud_sampled has " << cropped_cloud_sampled->size()  << std::endl;
         cropped_cloud_sampled->header.frame_id = "world";

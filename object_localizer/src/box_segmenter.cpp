@@ -11,6 +11,7 @@
 #include "object_localizer_msg/BBox_int.h"
 #include "object_localizer_msg/BBox_float.h"
 #include "object_localizer_msg/BBox_list.h"
+#include "object_localizer_msg/Segment_list.h"
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
@@ -43,63 +44,63 @@ typedef pcl::PointCloud< PointT > PointCloudT;
 std::string camera_frame = "camera_depth_optical_frame";
 
 // function used to show the merged point cloud and calculated surface normal
-void Visualize ( PointCloudT::Ptr cloud, pcl::PointCloud<pcl::Normal>::Ptr normals )
-{
-	std::printf ( "Visualizing point clouds...\n" );
-	pcl::visualization::PCLVisualizer viewer ( "Merged Point Clouds" );
-	int v1(0);
-	viewer.createViewPort ( 0.0, 0.0, 1.0, 1.0, v1 );
-
-	// The color we will be using
-	float bckgr_gray_level = 0.0; // Black
-	float txt_gray_lvl = 1.0 - bckgr_gray_level;
-
-	// ICP aligned point cloud
-	pcl::visualization::PointCloudColorHandlerRGBField< PointT > cloud_in_color_i ( cloud );
-	viewer.addPointCloud ( cloud, cloud_in_color_i, "cloud_icp_v1", v1 );
-	viewer.setPointCloudRenderingProperties ( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud_icp_v1" );
-	//Add normals
-	viewer.addPointCloudNormals < pcl::PointXYZRGB, pcl::Normal > ( cloud, normals, 10, 0.01, "normals" );
-	// Set background color
-	viewer.setBackgroundColor ( bckgr_gray_level, bckgr_gray_level, bckgr_gray_level, v1 );
-	// Set camera position and orientation
-	viewer.setCameraPosition ( -0.0611749, -0.040113, 0.00667606, -0.105521, 0.0891437, 0.990413 );
-	viewer.setSize ( 1280, 1024 ); // Visualiser window size
-
-	// Display the visualiser
-	while ( !viewer.wasStopped () )
-  {
-    viewer.spinOnce ();
-	}
-}
+// void Visualize ( PointCloudT::Ptr cloud, pcl::PointCloud<pcl::Normal>::Ptr normals )
+// {
+// 	std::printf ( "Visualizing point clouds...\n" );
+// 	pcl::visualization::PCLVisualizer viewer ( "Merged Point Clouds" );
+// 	int v1(0);
+// 	viewer.createViewPort ( 0.0, 0.0, 1.0, 1.0, v1 );
+//
+// 	// The color we will be using
+// 	float bckgr_gray_level = 0.0; // Black
+// 	float txt_gray_lvl = 1.0 - bckgr_gray_level;
+//
+// 	// ICP aligned point cloud
+// 	pcl::visualization::PointCloudColorHandlerRGBField< PointT > cloud_in_color_i ( cloud );
+// 	viewer.addPointCloud ( cloud, cloud_in_color_i, "cloud_icp_v1", v1 );
+// 	viewer.setPointCloudRenderingProperties ( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud_icp_v1" );
+// 	//Add normals
+// 	viewer.addPointCloudNormals < pcl::PointXYZRGB, pcl::Normal > ( cloud, normals, 10, 0.01, "normals" );
+// 	// Set background color
+// 	viewer.setBackgroundColor ( bckgr_gray_level, bckgr_gray_level, bckgr_gray_level, v1 );
+// 	// Set camera position and orientation
+// 	viewer.setCameraPosition ( -0.0611749, -0.040113, 0.00667606, -0.105521, 0.0891437, 0.990413 );
+// 	viewer.setSize ( 1280, 1024 ); // Visualiser window size
+//
+// 	// Display the visualiser
+// 	while ( !viewer.wasStopped () )
+//   {
+//     viewer.spinOnce ();
+// 	}
+// }
 
 class BoxSegmenter
 {
 public:
 
-  void get_surface_normal( PointCloudT::Ptr cloud )
-  {
-    // compute surface normals
-  	std::printf( "Computing surface normals...\n" );
-  	// Create the normal estimation class, and pass the input dataset to it
-    pcl::NormalEstimation< PointT, pcl::Normal > ne;
-    ne.setInputCloud ( cloud );
-
-    // Create an empty kdtree representation, and pass it to the normal estimation object.
-    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-    pcl::search::KdTree< PointT >::Ptr tree ( new pcl::search::KdTree< PointT > () );
-    ne.setSearchMethod ( tree );
-    // Output datasets
-    pcl::PointCloud< pcl::Normal >::Ptr cloud_normals ( new pcl::PointCloud< pcl::Normal > );
-    // Use all neighbors in a sphere of radius 2cm
-    ne.setRadiusSearch ( 0.02 );
-    // Compute the features
-    ne.compute ( *cloud_normals );
-
-  	// cloud_normals->points.size () should have the same size as the input cloud->points.size ()*
-  	std::printf( "cloud size: %lu; normals size: %lu\n", cloud->points.size(), cloud_normals->points.size() );
-  	//Visualize( cloud, cloud_normals );
-  }
+  // void get_surface_normal( PointCloudT::Ptr cloud )
+  // {
+  //   // compute surface normals
+  // 	std::printf( "Computing surface normals...\n" );
+  // 	// Create the normal estimation class, and pass the input dataset to it
+  //   pcl::NormalEstimation< PointT, pcl::Normal > ne;
+  //   ne.setInputCloud ( cloud );
+	//
+  //   // Create an empty kdtree representation, and pass it to the normal estimation object.
+  //   // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+  //   pcl::search::KdTree< PointT >::Ptr tree ( new pcl::search::KdTree< PointT > () );
+  //   ne.setSearchMethod ( tree );
+  //   // Output datasets
+  //   pcl::PointCloud< pcl::Normal >::Ptr cloud_normals ( new pcl::PointCloud< pcl::Normal > );
+  //   // Use all neighbors in a sphere of radius 2cm
+  //   ne.setRadiusSearch ( 0.02 );
+  //   // Compute the features
+  //   ne.compute ( *cloud_normals );
+	//
+  // 	// cloud_normals->points.size () should have the same size as the input cloud->points.size ()*
+  // 	std::printf( "cloud size: %lu; normals size: %lu\n", cloud->points.size(), cloud_normals->points.size() );
+  // 	//Visualize( cloud, cloud_normals );
+  // }
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
@@ -119,27 +120,34 @@ public:
   {
     if ( bbox_list->BBox_list_float.size() > 0 )
     {
+      object_localizer_msg::Segment_list::Ptr segment_list_msg( new object_localizer_msg::Segment_list() );
+
       // step 1, create the bounding box list
       std::vector<box_t_b> box_t_b_list;
+			int box_counter = 0;
       for ( object_localizer_msg::BBox_float bbox : bbox_list->BBox_list_float )
       {
-        std::cout << "Bounding box has [x1, x2, y1, y2]: [" << bbox.x1 << "," << bbox.x2 << "," << bbox.y1 << "," << bbox.y2  << "]" << std::endl;
+        std::cout << "Bounding box [" << box_counter << "] has [x1, x2, y1, y2]: [" << bbox.x1 << "," << bbox.x2 << "," << bbox.y1 << "," << bbox.y2  << "]" << std::endl;
+        segment_list_msg->BBox_list_float.push_back( bbox );
         box_t_b box_n { {bbox.x1, bbox.y1}, {bbox.x2, bbox.y2} } ;
         box_t_b_list.push_back( box_n );
+				box_counter++;
       }
 
       // step 2, for each point in saved cloud, check whether they are in the bounding boxes.
       PointCloudT::Ptr cropped_cloud ( new PointCloudT );
       int point_counter = 0;
-      for ( PointT temp_point: saved_cloud->points )
+      box_counter = 0;
+      for ( box_t_b box_tmp : box_t_b_list )
       {
-        float x = temp_point.x;
-        float y = temp_point.y;
-        float z = temp_point.z;
-        point_t_b temp_point_2D( x, y );
-				int box_counter = 0;
-        for ( box_t_b box_tmp : box_t_b_list )
+        PointCloudT::Ptr segment_cloud ( new PointCloudT );
+        int segment_point_counter = 0;
+        for ( PointT temp_point: saved_cloud->points )
         {
+          float x = temp_point.x;
+          float y = temp_point.y;
+          float z = temp_point.z;
+          point_t_b temp_point_2D( x, y );
           if ( bg::within( temp_point_2D, box_tmp ) )
           {
 						PointT new_point;
@@ -150,21 +158,44 @@ public:
 						r = box_counter % 5 * 50;
 						g = box_counter % 3 * 80;
 						b = box_counter % 7 * 30;
+            if ( box_counter == 0 )
+            {
+              r = 255;
+              g = 255;
+              b = 255;
+            }
 						uint32_t rgb = (static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
 						new_point.rgb = *reinterpret_cast<float*>( &rgb );
             cropped_cloud->points.push_back( new_point );
+            segment_cloud->points.push_back( new_point );
+            segment_point_counter++;
             point_counter++;
           }
-					box_counter++;
         }
+
+        segment_cloud->width = segment_point_counter;
+        segment_cloud->height = 1;
+        segment_cloud->header.frame_id = "world";
+        pcl_conversions::toPCL ( ros::Time::now(), segment_cloud->header.stamp );
+        pcl::PCLPointCloud2 segment_cloud_pc2;
+        pcl::toPCLPointCloud2 ( *segment_cloud, segment_cloud_pc2 );
+        sensor_msgs::PointCloud2 segment_cloud_sm;
+        pcl_conversions::fromPCL ( segment_cloud_pc2, segment_cloud_sm );
+        segment_list_msg->Segment_list.push_back ( segment_cloud_sm );
+
+        box_counter++;
       }
+
       cropped_cloud->width = point_counter;
       cropped_cloud->height = 1;
       std::cout << "cropped_cloud has " << cropped_cloud->size()  << std::endl;
       cropped_cloud->header.frame_id = "world";
       pcl_conversions::toPCL ( ros::Time::now(), cropped_cloud->header.stamp );
       cloud_pub_.publish ( cropped_cloud );
-      get_surface_normal( cropped_cloud );
+
+      segment_list_msg->header.frame_id = "world";
+      segment_list_msg->header.stamp = ros::Time::now();
+      segment_pub_.publish ( segment_list_msg );
     }
   }
 
@@ -178,9 +209,14 @@ public:
     cloud_pub_ = nh_.advertise < PointCloudT > ( cloud_out_name, 30 );
     ROS_INFO_STREAM ( "Publishing point cloud on topic: " << cloud_out_name );
 
-    bbox_sub_ = nh_.subscribe ( bbox_topic_, 30, &BoxSegmenter::bbox_cb, this );
+    bbox_sub_ = nh_.subscribe ( bbox_topic_, 6, &BoxSegmenter::bbox_cb, this );
     std::string bbox_in_name = nh_.resolveName ( bbox_topic_ );
     ROS_INFO_STREAM ( "Listening for bounding box list on topic: " << bbox_in_name );
+
+    std::string segment_out_name = "/box_segmenter/segment_list";
+    segment_pub_ = nh_.advertise < object_localizer_msg::Segment_list > ( segment_out_name, 30 );
+    ROS_INFO_STREAM ( "Publishing segment list on topic: " << segment_out_name );
+
   }
 
   ~BoxSegmenter () { }
@@ -194,6 +230,7 @@ private:
   ros::Publisher cloud_pub_;
   std::string bbox_topic_;
   ros::Subscriber bbox_sub_;
+  ros::Publisher segment_pub_;
   ros::Time sample_time;
 };
 

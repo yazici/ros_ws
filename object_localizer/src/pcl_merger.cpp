@@ -71,7 +71,7 @@ void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 	// std::printf( "Downsampling point clouds...\n" );
   static pcl::VoxelGrid<pcl::PointXYZRGB> grid;
   grid.setInputCloud ( cloud );
-  grid.setLeafSize ( 0.005f, 0.005f, 0.05f );
+  grid.setLeafSize ( 0.005f, 0.005f, 0.005f );
   grid.filter ( *cloud_sampled );
 	std::printf( "Downsampled cloud size is %d, %d\n", cloud_sampled->width, cloud_sampled->height );
 }
@@ -206,9 +206,13 @@ public:
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
-    // if input cloud is empty, return
-    if ( ( cloud->width * cloud->height ) == 0 )
-      return;
+    // if input cloud is empty or is not dense, publish the old point cloud and return
+    if ( ( cloud->width * cloud->height ) == 0 && ! cloud->is_dense )
+		{
+			pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+	    cloud_pub_.publish ( scene_cloud_total );
+			return;
+		}
 
     // convert input ros cloud to pcl cloud
     // and save it in local variable scene_cloud
@@ -216,38 +220,26 @@ public:
     pcl_conversions::toPCL( *cloud, pcl_pc2 );
     pcl::fromPCLPointCloud2 ( pcl_pc2, *scene_cloud_ );
 		sample_time = cloud->header.stamp;
-		std::cout << "time for input cloud is " << cloud->header.stamp << std::endl;
+		std::cout << "[" << sample_time << "] Input point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
 
-		std::cout << "Read input point cloud with [" << scene_cloud_->width << ", " << scene_cloud_->height << "] data points" << std::endl;
+		// downsampling and transforming the input point cloud
 		// filterOutliner ( scene_cloud_ );
 		PointCloudT::Ptr scene_cloud_sampled	(new PointCloudT);
 		downSampling ( scene_cloud_, scene_cloud_sampled );
 		PointCloudT::Ptr scene_cloud_world	(new PointCloudT);
 		transform_point_cloud ( scene_cloud_sampled, scene_cloud_world );
-		std::cout << "output point cloud has " << scene_cloud_world->size()  << std::endl;
-		// if ( scene_cloud_world->size() > 10000 )
-		// {
-		// 	std::cout << "scene_cloud_world is too large to merge" << std::endl;
-		// 	return;
-		// }
+		std::cout << "Input point cloud after downSampling has [" << scene_cloud_world->size() << "] data points" << std::endl;
 
+		// merging the old point cloud with the input one
 		*scene_cloud_total += *scene_cloud_world;
-		// if ( scene_cloud_total->size() == 0 )
-		// {
-		// 	*scene_cloud_total += *scene_cloud_world;
-		// } else
-		// {
-		// 	MergePointclouds ( scene_cloud_world, scene_cloud_total );
-		// }
-
 		scene_cloud_total->header.frame_id = "world";
     scene_cloud_total->width = scene_cloud_total->size() + scene_cloud_world->size();
-		std::cout << "total point cloud has " << scene_cloud_total->size()  << std::endl;
-    scene_cloud_total->height = 1;
-		pcl_conversions::toPCL(ros::Time::now(), scene_cloud_total->header.stamp);
-		PointCloudT::Ptr scene_cloud_total_temp	(new PointCloudT);
+		scene_cloud_total->height = 1;
+		std::cout << "Merged point cloud has [" << scene_cloud_total->size() << "] data points" << std::endl;
+		pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+		PointCloudT::Ptr scene_cloud_total_temp	( new PointCloudT );
 		downSampling ( scene_cloud_total, scene_cloud_total_temp );
-		std::cout << "total point cloud after downsampling has " << scene_cloud_total_temp->size()  << std::endl;
+		std::cout << "Merged point cloud after downsampling has [" << scene_cloud_total_temp->size() << "] data points" << std::endl;
 		scene_cloud_total = scene_cloud_total_temp;
     cloud_pub_.publish ( scene_cloud_total );
   }
@@ -260,7 +252,7 @@ public:
 
     std::string p_ct = "/point_cloud_merger/points";
     cloud_pub_ = nh_.advertise < PointCloudT > ( p_ct, 30 );
-    ROS_INFO_STREAM ( "publishing point cloud message on topic " << p_ct );
+    ROS_INFO_STREAM ( "Publishing point cloud message on topic " << p_ct );
   }
 
   ~PointCloudMerger () { }
