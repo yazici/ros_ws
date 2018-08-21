@@ -2,511 +2,347 @@
 
 namespace microepsilon_scancontrol
 {
-bool Scanner::connect()
-{
-  if (connected_)
+  // connect to the me laser scanner
+  bool Scanner::connect()
   {
-    return true;
-  }
+    if ( connected_ )
+    {
+      return true;
+    }
 
-  std::vector<char *> vcInterfaces(5);
-  std::vector<unsigned int> vuiResolutions(10);
-  unsigned int uiInterfaceCount = 0;
-
-  int activeDevice = 0;
-
-  int iRetValue = GetDeviceInterfaces(&vcInterfaces[0], vcInterfaces.size());
-  if (iRetValue == ERROR_GETDEVINTERFACE_REQUEST_COUNT)
-  {
-    std::cout << "There are more than " << vcInterfaces.size() << " scanCONTROL connected \n";
-    uiInterfaceCount = vcInterfaces.size();
-  }
-  else if (iRetValue < 1)
-  {
-    std::cout << "A error occured during searching for connected scanCONTROL \n";
-    uiInterfaceCount = 0;
-    return false;
-  }
-  else
-  {
-    uiInterfaceCount = iRetValue;
-    if (uiInterfaceCount == 0)
-      std::cout << "There is no scanCONTROL connected \n";
-    else if (uiInterfaceCount == 1)
-      std::cout << "There is 1 scanCONTROL connected \n";
+    // list all connected microepsilon laser scanners, the maximum number is 5.
+    unsigned int uiInterfaceCount = 0;
+    int activeDevice = 0;
+    std::vector <char *> vcInterfaces ( 5 );
+    int iRetValue = GetDeviceInterfaces ( &vcInterfaces[0], vcInterfaces.size() );
+    if ( iRetValue == ERROR_GETDEVINTERFACE_REQUEST_COUNT )
+    {
+      std::cout << "There are more than " << vcInterfaces.size() << " scanCONTROL connected \n";
+      uiInterfaceCount = vcInterfaces.size();
+    }
+    else if ( iRetValue < 1 )
+    {
+      std::cout << "A error occured during searching for connected scanCONTROL \n";
+      uiInterfaceCount = 0;
+      return false;
+    }
     else
-      std::cout << "There are " << uiInterfaceCount << " scanCONTROL connected \n";
-    bool foundSN = false;
-    for (int i = 0; i < uiInterfaceCount; ++i)
     {
-      std::cout << vcInterfaces[i] << std::endl;
-      std::string tempStr = vcInterfaces[i];
-      if (serial_number_.size() != 0 &&
-          tempStr.compare(tempStr.size() - serial_number_.size(), serial_number_.size(), serial_number_) == 0)
+      uiInterfaceCount = iRetValue;
+      if ( uiInterfaceCount == 0 )
+        std::cout << "There is no scanCONTROL connected \n";
+      else if ( uiInterfaceCount == 1 )
+        std::cout << "There is 1 scanCONTROL connected \n";
+      else
+        std::cout << "There are " << uiInterfaceCount << " scanCONTROL connected \n";
+      bool foundSN = false;
+      for ( int i = 0; i < uiInterfaceCount; ++i )
       {
-        std::cout << "Found Device with serial number: " << serial_number_ << std::endl;
-        foundSN = true;
-        activeDevice = i;
-        break;
-      }
-    }
-    if (!foundSN && serial_number_.size() != 0)
-    {
-      std::cout << "Could not find device with S/N: " << serial_number_ << ". Using first device in list." << std::endl;
-    }
-  }
-
-  if ((iRetValue = SetPathtoDeviceProperties(path_to_device_properties_.c_str())) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error setting device ID path\nExit program...\n";
-    return false;
-  }
-
-  std::cout << "Connecting to " << vcInterfaces[activeDevice] << std::endl;
-  if ((llt_.SetDeviceInterface(vcInterfaces[activeDevice])) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting dev id " << iRetValue << "!\n";
-    return false;
-  }
-
-  /* Connect to sensor */
-  if ((iRetValue = llt_.Connect()) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while connecting to camera - Error " << iRetValue << "!\n";
-    return false;
-  }
-  TScannerType m_tscanCONTROLType;
-  if ((iRetValue = llt_.GetLLTType(&m_tscanCONTROLType)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while GetLLTType!\n";
-    return false;
-  }
-
-  if (iRetValue == GENERAL_FUNCTION_DEVICE_NAME_NOT_SUPPORTED)
-  {
-    std::cout << "Can't decode scanCONTROL type. Please contact Micro Epsilon for a newer version of the library.\n";
-  }
-  // 	std::cout << llt_.deviceData.device_series << std::endl;
-  // 	std::cout << llt_.deviceData.scaling << std::endl;
-  // 	std::cout << llt_.deviceData.offset << std::endl;
-  // 	std::cout << llt_.deviceData.max_packet_size << std::endl;
-  // 	std::cout << llt_.deviceData.max_frequency << std::endl;
-  // 	std::cout << llt_.deviceData.post_proc << std::endl;
-  // 	std::cout << llt_.deviceData.min_x_display << std::endl;
-  // 	std::cout << llt_.deviceData.max_x_display << std::endl;
-  // 	std::cout << llt_.deviceData.min_y_display << std::endl;
-  // 	std::cout << llt_.deviceData.max_y_display << std::endl;
-  // 	std::cout << llt_.deviceData.rotate_image << std::endl;
-  // 	std::cout << llt_.deviceData.min_width << std::endl;
-
-  if (m_tscanCONTROLType == scanCONTROL27xx_xxx)
-  {
-    std::cout << "The scanCONTROL is a scanCONTROL27xx\n";
-  }
-  else if (m_tscanCONTROLType == scanCONTROL26xx_xxx)
-  {
-    std::cout << "The scanCONTROL is a scanCONTROL26xx\n";
-  }
-  else if (m_tscanCONTROLType == scanCONTROL29xx_xxx)
-  {
-    std::cout << "The scanCONTROL is a scanCONTROL29xx\n";
-  }
-  else
-  {
-    std::cout << "The scanCONTROL is a undefined type\nPlease contact Micro-Epsilon for a newer SDK\n";
-  }
-  connected_ = true;
-  return true;
-}
-
-bool Scanner::initialise()
-{
-  if (!connected_)
-  {
-    return false;
-  }
-
-  // set to default config
-  llt_.ReadWriteUserModes(false, 0);
-
-  if (llt_.SetResolution(SCANNER_RESOLUTION) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting resolution!\n";
-    return false;
-  }
-
-  if ((llt_.SetProfileConfig(CONTAINER)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting Container Mode!\n";
-    return false;
-  }
-
-  if ((llt_.SetBufferCount(4)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting BufferCount!\n";
-    return false;
-  }
-
-  if (llt_.SetFeature(FEATURE_FUNCTION_IDLETIME, idle_time_) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting uiIdleTime!\n";
-    return false;
-  }
-
-  if (llt_.SetFeature(FEATURE_FUNCTION_SHUTTERTIME, shutter_time_) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting uiShutterTime!\n";
-    return false;
-  }
-
-  if (llt_.SetFeature(FEATURE_FUNCTION_TRIGGER, 0x00000000) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting trigger!\n";
-    return false;
-  }
-
-  // Setting High Voltage mode
-  if (llt_.SetFeature(0xf0f008c0, 0x82000820) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting High Voltage!\n";
-    return false;
-  }
-
-  int iRetValue;
-
-  if ((iRetValue = llt_.SetPacketSize(SCANNER_RESOLUTION)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error during SetPacketSize\n" << iRetValue;
-    return false;
-    ;
-  }
-
-  /* Register Callbacks for program handling */
-  if ((llt_.RegisterBufferCallback((gpointer)&Scanner::new_profile_callback_wrapper, this)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while registering buffer callback!\n";
-    return false;
-    ;
-  }
-
-  if ((llt_.RegisterControlLostCallback((gpointer)&Scanner::control_lost_callback_wrapper, this)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while registering control lost callback!\n";
-    return false;
-    ;
-  }
-
-  return true;
-}
-
-bool Scanner::disconnect()
-{
-  if (!connected_)
-  {
-    return true;
-  }
-  llt_.Disconnect();
-  connected_ = false;
-  return true;
-}
-void Scanner::control_lost_callback_wrapper(ArvGvDevice *gv_device, gpointer user_data)
-{
-  ((Scanner *)user_data)->control_lost_callback(gv_device);
-}
-
-void Scanner::new_profile_callback_wrapper(const void *data, size_t data_size, gpointer user_data)
-{
-  ((Scanner *)user_data)->new_profile_callback(data, data_size);
-}
-
-void Scanner::control_lost_callback(ArvGvDevice *gv_device)
-{
-  connected_ = false;
-  std::cout << "Connection to scanner lost! Trying to reconnect!" << std::endl;
-  bool was_scanning = scanning_;
-  reconnect();
-  if (was_scanning)
-  {
-    startScanning();
-  }
-}
-void DisplayTimestamp(unsigned char *uiTimestamp)
-{
-  double dShutterOpen, dShutterClose;
-  unsigned int uiProfileCount;
-
-  Timestamp2TimeAndCount(&uiTimestamp[0], &dShutterOpen, &dShutterClose, &uiProfileCount);
-
-  std::cout.precision(8);
-  std::cout << "Profile Count: " << uiProfileCount << " ShutterOpen: " << dShutterOpen
-            << " ShutterClose: " << dShutterClose << "\n";
-  std::cout.precision(6);
-}
-
-void Scanner::new_profile_callback(const void *data, size_t data_size)
-{
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-    if (data != NULL && data_size == SCANNER_RESOLUTION * fieldCount_ * container_size_ * 2)
-    {
-      memcpy(&container_buffer_[0], data, data_size);
-    }
-
-    unsigned int profile_counter;
-    double shutter_open;
-    double shutter_close;
-    Timestamp2TimeAndCount(container_buffer_[container_buffer_.size() - 1].timestamp, &shutter_open, &shutter_close,
-                           &profile_counter);
-    if (need_time_sync_)
-    {
-      time_sync_->sync_time(profile_counter, shutter_open, shutter_close);
-      need_time_sync_ = false;
-    }
-    for (int i = 0; i < container_buffer_.size(); ++i)
-    {
-      ScanProfileConvertedPtr profile(new ScanProfileConverted);
-      Timestamp2TimeAndCount(container_buffer_[i].timestamp, &profile->shutter_open, &profile->shutter_close,
-                             &profile->profile_counter);
-      // DisplayTimestamp(container_buffer_[i].timestamp);
-      for (int j = 0; j < SCANNER_RESOLUTION; ++j)
-      {
-        if (container_buffer_[i].z[j] != 0)
+        std::cout << "***" << i << ":" << vcInterfaces[i] << std::endl;
+        std::string tempStr = vcInterfaces[i];
+        if ( serial_number_.size () != 0 &&
+             tempStr.compare ( tempStr.size () - serial_number_.size (), serial_number_.size (), serial_number_ ) == 0 )
         {
-          double x = ((container_buffer_[i].x[j] - (guint16)32768) * llt_.appData.scaling) / 1000.0;  // in meter
-          double z = ((container_buffer_[i].z[j] - (guint16)32768) * llt_.appData.scaling + llt_.appData.offset) /
-                     1000.0;  // in meter
-          profile->x.push_back(x);
-          profile->z.push_back(z);
+          std::cout << "Found Device with serial number: " << serial_number_ << std::endl;
+          foundSN = true;
+          activeDevice = i;
+          break;
         }
       }
-
-      profile_queue_.push(profile);
+      if ( !foundSN && serial_number_.size() != 0 )
+      {
+        std::cout << "Could not find device with S/N: " << serial_number_ << ". Using first device in list." << std::endl;
+      }
     }
-  }
-  notifyee_->notify();
-}
 
-bool Scanner::hasNewData()
-{
-  boost::mutex::scoped_lock lock(mutex_);
-  bool ret = !profile_queue_.empty();
-  return ret;
-}
+    if ( ( iRetValue = SetPathtoDeviceProperties ( path_to_device_properties_.c_str() ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error setting device properties path:\n\t[" << path_to_device_properties_ << "]\n";
+      return false;
+    }
 
-ScanProfileConvertedPtr Scanner::getData()
-{
-  boost::mutex::scoped_lock lock(mutex_);
-  ScanProfileConvertedPtr ptr;
-  if (profile_queue_.empty())
-  {
-    return ptr;
-  }
+    std::cout << "Connecting to " << vcInterfaces[ activeDevice ] << std::endl;
+    if ( ( llt_.SetDeviceInterface( vcInterfaces[ activeDevice ] ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting dev id " << iRetValue << "!\n";
+      return false;
+    }
 
-  ptr = profile_queue_.front();
-  profile_queue_.pop();
-  return ptr;
-}
+    // Connect to sensor
+    if ( ( iRetValue = llt_.Connect() ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while connecting to camera - Error " << iRetValue << "!\n";
+      return false;
+    }
 
-bool Scanner::startScanning()
-{
-  need_time_sync_ = true;
-  if (!connected_)
-  {
-    return false;
-  }
-  if (scanning_)
-  {
+    // print the type of microepsilon laser scanner
+    TScannerType m_tscanCONTROLType;
+    if ( ( iRetValue = llt_.GetLLTType( &m_tscanCONTROLType ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while GetLLTType!\n";
+      return false;
+    }
+    if (iRetValue == GENERAL_FUNCTION_DEVICE_NAME_NOT_SUPPORTED)
+    {
+      std::cout << "Can't decode scanCONTROL type. Please contact Micro Epsilon for a newer version of the library.\n";
+    }
+    if ( m_tscanCONTROLType == scanCONTROL27xx_xxx )
+    {
+      std::cout << "The scanCONTROL is a scanCONTROL27xx\n";
+    }
+    else if ( m_tscanCONTROLType == scanCONTROL26xx_xxx )
+    {
+      std::cout << "The scanCONTROL is a scanCONTROL26xx\n";
+    }
+    else if ( m_tscanCONTROLType == scanCONTROL29xx_xxx )
+    {
+      std::cout << "The scanCONTROL is a scanCONTROL29xx\n";
+    }
+    else
+    {
+      std::cout << "The scanCONTROL is a undefined type\nPlease contact Micro-Epsilon for a newer SDK\n";
+    }
+
+    connected_ = true;
     return true;
   }
-  int iRetValue;
 
-  unsigned int dwInquiry;
-
-  // Bitfeld=Round(Log2(Auflösung)) for the resolution bitfield for the container
-  // double dTempLog = 1.0/log(2.0);
-  // unsigned int dwResolutionBitField = (unsigned int)floor((log((double)m_uiResolution)*dTempLog)+0.5);
-
-  if ((iRetValue = llt_.GetFeature(INQUIRY_FUNCTION_REARRANGEMENT_PROFILE, &dwInquiry)) < GENERAL_FUNCTION_OK)
+  bool Scanner::disconnect()
   {
-    std::cout << "Error during GetFeature";
-    return false;
+    if ( !connected_ )
+    {
+      return true;
+    }
+    llt_.Disconnect ();
+    connected_ = false;
+    return true;
   }
 
-  if ((dwInquiry & 0x80000000) == 0)
+  // setup the parameters for me laser scanner
+  bool Scanner::initialise()
   {
-    std::cout << "\nThe connected scanCONTROL don't support the container mode\n\n";
-    return false;
+    if ( !connected_ )
+    {
+      return false;
+    }
+
+    if ( llt_.SetResolution ( SCANNER_RESOLUTION ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting resolution!\n";
+      return false;
+    }
+
+    if ( ( llt_.SetProfileConfig ( PROFILE ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting PROFILE Mode!\n";
+      return false;
+    }
+
+    // if ( ( llt_.SetBufferCount ( 4 ) ) < GENERAL_FUNCTION_OK)
+    // {
+    //   std::cout << "Error while setting BufferCount!\n";
+    //   return false;
+    // }
+
+    if ( llt_.SetFeature ( FEATURE_FUNCTION_IDLETIME, idle_time_ ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting uiIdleTime!\n";
+      return false;
+    }
+
+    if ( llt_.SetFeature ( FEATURE_FUNCTION_SHUTTERTIME, shutter_time_) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting uiShutterTime!\n";
+      return false;
+    }
+
+    if ( llt_.SetFeature ( FEATURE_FUNCTION_TRIGGER, 0x00000000 ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while setting trigger!\n";
+      return false;
+    }
+
+    // Register Callbacks for Profiles
+    if ( ( llt_.RegisterBufferCallback ( ( gpointer ) &Scanner::new_profile_callback_wrapper, this ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while registering buffer callback!\n";
+      return false;
+    }
+
+    if ( ( llt_.RegisterControlLostCallback ( ( gpointer ) &Scanner::control_lost_callback_wrapper, this ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while registering control lost callback!\n";
+      return false;
+    }
+
+    return true;
   }
 
-  // Extract Z
-  // Extract X
-  // calculation for the points per profile = 9 for 640
-  // Extract only 1th reflection
-  // Extract timestamp in extra field
-
-  if ((iRetValue = llt_.SetFeature(FEATURE_FUNCTION_REARRANGEMENT_PROFILE, 0x00120c03 | 9 << 12)) < GENERAL_FUNCTION_OK)
+  void Scanner::control_lost_callback_wrapper ( ArvGvDevice *gv_device, gpointer user_data )
   {
-    std::cout << "Error during SetFeature(FEATURE_FUNCTION_REARRANGEMENT_PROFILE)";
-    return false;
+    ( (Scanner *) user_data )->control_lost_callback ( gv_device );
   }
 
-  std::cout << "Set profile container size\n";
-  if ((iRetValue = llt_.SetProfileContainerSize(SCANNER_RESOLUTION * fieldCount_, container_size_)) <
-      GENERAL_FUNCTION_OK)
+  void Scanner::control_lost_callback ( ArvGvDevice *gv_device )
   {
-    std::cout << "Error during SetProfileContainerSize";
-    return false;
+    connected_ = false;
+    // get the old scanning setting
+    bool was_scanning = scanning_;
+    std::cout << " Connection to scanner lost! Trying to reconnect! " << std::endl;
+    reconnect ();
+    if ( was_scanning )
+    {
+      startScanning ();
+    }
   }
 
-  setMeasuringField(field_.x_start, field_.x_size, field_.z_start, field_.z_size);
-
-  // Setup transfer of multiple profiles
-  if ((iRetValue = llt_.TransferProfiles(NORMAL_CONTAINER_MODE, true)) < GENERAL_FUNCTION_OK)
+  void Scanner::new_profile_callback_wrapper ( const void *data, size_t data_size, gpointer user_data )
   {
-    std::cout << "Error in profile transfer!\n";
-    return false;
+    ( (Scanner *) user_data )->new_profile_callback ( data, data_size );
   }
-  scanning_ = true;
-  return true;
-}
 
-bool Scanner::stopScanning()
-{
-  if (!connected_)
+  void Scanner::new_profile_callback ( const void *data, size_t data_size )
   {
+    // save the input data
+    std::vector < unsigned char > profile_buffer_;
+    profile_buffer_.resize ( SCANNER_RESOLUTION * 64 );
+    if ( data != NULL && data_size == profile_buffer_.size() )
+    {
+      memcpy ( &profile_buffer_[0], data, data_size );
+    }
+
+    ScanProfileConvertedPtr profile ( new ScanProfileConverted );
+    Timestamp2TimeAndCount ( &profile_buffer_[0], &( profile->shutter_open ), &( profile->shutter_close ), &( profile->profile_counter ) );
+    // show the time information of the input profile
+    // std::cout <<"[profile_counter, shutter_open, shutter_close] = [" << profile->profile_counter << ", " << profile->shutter_open << ", " << profile->shutter_close << "]" << std::endl;
+    profile->x.resize ( SCANNER_RESOLUTION );
+    profile->z.resize ( SCANNER_RESOLUTION );
+    ConvertProfile2Values ( &profile_buffer_[0], profile_buffer_.size(), &llt_.appData, SCANNER_RESOLUTION, 0, NULL, NULL, NULL, &( profile->x[0] ), &( profile->z[0] ), NULL, NULL );
+
+    // publish the new profile
+    notifyee_->notify( profile );
+  }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  Scanner::Scanner ( Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
+                     std::string serial_number, std::string path_to_device_properties )
+    : notifyee_ ( notifyee ), shutter_time_ ( shutter_time ), idle_time_ ( idle_time ), serial_number_ ( serial_number )
+  {
+    connected_ = false;
+    scanning_ = false;
+    path_to_device_properties_ = path_to_device_properties + "/device_properties.dat";
+
+    connect();
+    if ( connected_ )
+    {
+      if ( !initialise() )
+      {
+        disconnect();
+        return;
+      }
+      if ( !setLaserPower( true ) )
+      {
+        disconnect();
+        return;
+      }
+    }
+  }
+
+  Scanner::~Scanner()
+  {
+    if ( connected_ )
+    {
+      if ( scanning_ )
+      {
+        stopScanning ();
+      }
+      setLaserPower ( false );
+      disconnect ();
+    }
+  }
+
+  bool Scanner::startScanning ()
+  {
+    if ( !connected_ )
+    {
+      return false;
+    }
+    if ( scanning_ )
+    {
+      return true;
+    }
+
+    int iRetValue;
+    if ( ( iRetValue = llt_.TransferProfiles ( NORMAL_TRANSFER, true ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error in profile transfer!\n";
+      return false;
+    }
+    scanning_ = true;
+    return true;
+  }
+
+  bool Scanner::stopScanning ()
+  {
+    if ( !connected_ )
+    {
+      scanning_ = false;
+      return true;
+    }
+    if ( !scanning_ )
+    {
+      return true;
+    }
+    if ( ( llt_.TransferProfiles ( NORMAL_TRANSFER, false ) ) < GENERAL_FUNCTION_OK )
+    {
+      std::cout << "Error while stopping transmission!\n";
+      return false;
+    }
     scanning_ = false;
     return true;
   }
-  if (!scanning_)
+
+  bool Scanner::reconnect()
   {
+    if ( connected_ )
+    {
+      if ( scanning_ )
+      {
+        stopScanning ();
+      }
+      setLaserPower ( false );
+      disconnect ();
+    }
+    connect ();
+    if ( connected_ )
+    {
+      if ( !initialise() )
+      {
+        return false;
+      }
+      if ( !setLaserPower ( true ) )
+      {
+        disconnect();
+        return false;
+      }
+    }
+    else
+    {
+      return false;
+    }
     return true;
   }
-  if ((llt_.TransferProfiles(NORMAL_CONTAINER_MODE, false)) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while stopping transmission!\n";
-    return false;
-  }
-  scanning_ = false;
-  return true;
-}
 
-Scanner::Scanner(TimeSync *time_sync, Notifyee *notifyee, unsigned int shutter_time, unsigned int idle_time,
-                 unsigned int container_size, MeasurementField field, std::string serial_number,
-                 std::string path_to_device_properties)
-  : time_sync_(time_sync)
-  , notifyee_(notifyee)
-  , shutter_time_(shutter_time)
-  , idle_time_(idle_time)
-  , container_size_(container_size)
-  , field_(field)
-  , serial_number_(serial_number)
-{
-  connected_ = false;
-  scanning_ = false;
-  fieldCount_ = 3;
-  container_buffer_.resize(container_size_);
-  path_to_device_properties_ = path_to_device_properties;
-  path_to_device_properties_ += "/device_properties.dat";
-  connect();
-  if (connected_)
+  bool Scanner::setLaserPower ( bool on )
   {
-    if (!initialise())
+    guint32 value = on ? 0x82000002 : 0x82000000;
+    if ( llt_.SetFeature ( FEATURE_FUNCTION_LASERPOWER, value ) < GENERAL_FUNCTION_OK )
     {
-      disconnect();
-      return;
-    }
-    if (!setLaserPower(true))
-    {
-      disconnect();
-      return;
-    }
-  }
-}
-Scanner::~Scanner()
-{
-  if (connected_)
-  {
-    if (scanning_)
-    {
-      stopScanning();
-    }
-    setLaserPower(false);
-    disconnect();
-  }
-}
-
-bool Scanner::reconnect()
-{
-  if (connected_)
-  {
-    if (scanning_)
-    {
-      stopScanning();
-    }
-    setLaserPower(false);
-    disconnect();
-  }
-  connect();
-  if (connected_)
-  {
-    if (!initialise())
-    {
+      std::cout << "Error while setting trigger!\n";
       return false;
     }
-    if (!setLaserPower(true))
-    {
-      disconnect();
-      return false;
-    }
+    return true;
   }
-  else
-  {
-    return false;
-  }
-  return true;
-}
-
-bool Scanner::setLaserPower(bool on)
-{
-  guint32 value = on ? 0x82000002 : 0x82000000;
-
-  if (llt_.SetFeature(FEATURE_FUNCTION_LASERPOWER, value) < GENERAL_FUNCTION_OK)
-  {
-    std::cout << "Error while setting trigger!\n";
-    return false;
-  }
-
-  return true;
-}
-
-// Schreibkommando für seq. Register
-void Scanner::WriteCommand(unsigned int command, unsigned int data)
-{
-  static int toggle = 0;
-  llt_.SetFeature(FEATURE_FUNCTION_SHARPNESS, (unsigned int)(command << 9) + (toggle << 8) + data);
-  toggle = toggle ? 0 : 1;
-}
-// Schreibe Wert auf Registerposition
-void Scanner::WriteValue2Register(unsigned short value)
-{
-  WriteCommand(1, (unsigned int)(value / 256));
-  WriteCommand(1, (unsigned int)(value % 256));
-}
-
-void Scanner::setMeasuringField(ushort x_start, ushort x_size, ushort z_start, ushort z_size)
-{
-  // Aktiviere freies Messfeld
-  llt_.SetFeature(FEATURE_FUNCTION_MEASURINGFIELD, 0x82000800);
-  // Setze die gewünschte Messfeldgröße
-
-  WriteCommand(0, 0);  // Resetkommando
-  WriteCommand(0, 0);
-  WriteCommand(2, 8);
-  WriteValue2Register(z_start);
-  WriteValue2Register(z_size);
-  WriteValue2Register(x_start);
-  WriteValue2Register(x_size);
-  WriteCommand(0, 0);  // Beende Schreibvorgang
-}
 
 }  // namespace microepsilon_scancontrol

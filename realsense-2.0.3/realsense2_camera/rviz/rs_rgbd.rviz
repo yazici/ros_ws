@@ -3,13 +3,7 @@ Panels:
     Help Height: 75
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
-        - /Status1
-        - /Grid1
-        - /Image1
-        - /Image2
-        - /PointCloud21
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 778
   - Class: rviz/Selection
@@ -54,7 +48,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /camera/color/image_rect_color
+      Image Topic: /camera/color/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -146,10 +140,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.265398204
+      Pitch: 0.255398244
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.91359329
+      Yaw: 0.360416323
     Saved: ~
 Window Geometry:
   Displays:
