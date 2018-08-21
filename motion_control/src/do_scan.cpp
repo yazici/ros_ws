@@ -1,22 +1,17 @@
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-
-#include <moveit_msgs/DisplayRobotState.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-
-#include <moveit_msgs/AttachedCollisionObject.h>
-#include <moveit_msgs/CollisionObject.h>
-
-#include <moveit_visual_tools/moveit_visual_tools.h>
+#include <cmath>
+#include <vector>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
 
+#include <moveit/move_group_interface/move_group_interface.h>
+#include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include <moveit_msgs/DisplayRobotState.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+#include <moveit_msgs/AttachedCollisionObject.h>
+#include <moveit_msgs/CollisionObject.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
-
-#include <cmath>
-
-#include <vector>
 
 int main(int argc, char** argv)
 {
@@ -36,12 +31,12 @@ int main(int argc, char** argv)
   ROS_INFO_STREAM ( "Start for planning" );
   geometry_msgs::Pose target_pose1;
 
-  // [***] Rotation around x is [143.606] degrees
-  // [***] Scan central point is [x, y, z] = [0.240043, -1.54288, 1.66355]
-  // [***] Scan start point is [x, y, z] = [0.240043, -1.59035, 1.59915]
-  // [***] Scan end point is [x, y, z] = [0.240043, -1.49542, 1.72795]
   while ( ros::ok() )
   {
+    // [***] Rotation around x is [143.606] degrees
+    // [***] Scan central point is [x, y, z] = [0.240043, -1.54288, 1.66355]
+    // [***] Scan start point is [x, y, z] = [0.240043, -1.59035, 1.59915]
+    // [***] Scan end point is [x, y, z] = [0.240043, -1.49542, 1.72795]
     float rotation_deg = 143.606;
     float start_point[3] {0.240043, -1.59035, 1.59915};
     float end_point[3] {0.240043, -1.49542, 1.72795};
@@ -82,29 +77,6 @@ int main(int argc, char** argv)
 
       waypoints.push_back ( target_pose1 );
 
-      // geometry_msgs::Pose target_pose3 = target_pose2;
-      // // 0.217905, -1.41144, 1.7295 142.62
-      // target_pose3.position.x = 0.217905;
-      // target_pose3.position.y = -1.41144;
-      // target_pose3.position.z = 1.7295;
-      // rollt = 142.62 * M_PI / 180.0;
-      // pitcht = 0;
-      // yawt = 0;
-      // target_pose3.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
-      // waypoints.push_back(target_pose3);
-      //
-      // geometry_msgs::Pose target_pose4 = target_pose3;
-      // // 0.217515, -1.51637, 1.60076 144.698
-      // target_pose4.position.x = 0.217515;
-      // target_pose4.position.y = -1.51637;
-      // target_pose4.position.z = 1.60076;
-      // rollt = 144.698 * M_PI / 180.0;
-      // pitcht = 0;
-      // yawt = 0;
-      // target_pose4.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
-      // waypoints.push_back(target_pose4);
-
-
       moveit_msgs::RobotTrajectory trajectory;
       const double jump_threshold = 0.0;
       const double eef_step = 0.01;
@@ -114,7 +86,7 @@ int main(int argc, char** argv)
       if ( fraction > 0.98 )
       {
         // scale the velocity and acceleration of the trajectory
-        const double scale_factor = 0.1;
+        const double scale_factor = 0.02;
         int point_size = trajectory.joint_trajectory.points.size();
         for ( int point_idx = 0; point_idx < point_size; point_idx++ )
         {
@@ -135,7 +107,6 @@ int main(int argc, char** argv)
 
         move_group.execute ( my_plan );
         ros::Duration ( 5.0 ) .sleep ();
-
       }
     }
   }
