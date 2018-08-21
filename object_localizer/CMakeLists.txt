@@ -38,6 +38,9 @@ target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable(profile_merger src/profile_merger.cpp)
 target_link_libraries(profile_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(pc_writer src/pc_writer.cpp)
+target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(rough_localizer src/rough_localizer.cpp)
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 

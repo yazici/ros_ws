@@ -33,13 +33,12 @@ int main(int argc, char** argv)
 
   while ( ros::ok() )
   {
-    // [***] Rotation around x is [143.606] degrees
-    // [***] Scan central point is [x, y, z] = [0.240043, -1.54288, 1.66355]
-    // [***] Scan start point is [x, y, z] = [0.240043, -1.59035, 1.59915]
-    // [***] Scan end point is [x, y, z] = [0.240043, -1.49542, 1.72795]
-    float rotation_deg = 143.606;
-    float start_point[3] {0.240043, -1.59035, 1.59915};
-    float end_point[3] {0.240043, -1.49542, 1.72795};
+    // [***] Rotation around x is [130.701] degrees
+    // [***] Scan start point is [x, y, z] = [0.232082, -1.27018, 1.94195]
+    // [***] Scan end point is [x, y, z] = [0.232082, -1.14888, 2.04629]
+    float rotation_deg = 130.701;
+    float start_point[3] {0.232082, -1.27018, 1.94195};
+    float end_point[3] {0.232082, -1.14888, 2.04629};
 
   	target_pose1.position.x = start_point[0];
     target_pose1.position.y = start_point[1];
@@ -57,9 +56,11 @@ int main(int argc, char** argv)
 
     if ( success )
     {
-      move_group.setMaxVelocityScalingFactor ( 0.01 );
-      move_group.setMaxAccelerationScalingFactor ( 0.01 );
+      move_group.setMaxVelocityScalingFactor ( 0.02 );
+      move_group.setMaxAccelerationScalingFactor ( 0.02 );
       move_group.move();
+
+      ros::Duration ( 5.0 ) .sleep ();
 
       // start scanning the part
       std::vector<geometry_msgs::Pose> waypoints;

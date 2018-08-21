@@ -33,7 +33,7 @@ typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
 float scan_offset = 0.10;
-float scan_distance = 0.08;
+float scan_distance = 0.10;
 
 void show_segment_cloud ( PointCloudT::ConstPtr cloud )
 {
@@ -218,8 +218,8 @@ public:
       float x_0 = central_point(0);
       float y_0 = central_point(1);
       float z_0 = central_point(2);
-      std::cout << "[***] Scan central point is [x, y, z] = [" << x_0 << ", " << y_0 << ", " << z_0 << "]" << std::endl;
-      std::cout << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;
+      // std::cout << "[***] Scan central point is [x, y, z] = [" << x_0 << ", " << y_0 << ", " << z_0 << "]" << std::endl;
+      std::cout << std::endl << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;
       float theta_tmp = ( theta - 90.0 ) * M_PI / 180.0;
 
       float x_tmp = x_0;
@@ -232,9 +232,9 @@ public:
       float y_e = y_tmp + scan_distance * std::cos ( theta_tmp );
       float z_e = z_tmp + scan_distance * std::sin ( theta_tmp );
 
-      std::cout << "[***] Scan central point is [x, y, z] = [" << x_tmp << ", " << y_tmp << ", " << z_tmp << "]" << std::endl;
+      // std::cout << "[***] Scan central point is [x, y, z] = [" << x_tmp << ", " << y_tmp << ", " << z_tmp << "]" << std::endl;
       std::cout << "[***] Scan start point is [x, y, z] = [" << x_s << ", " << y_s << ", " << z_s << "]" << std::endl;
-      std::cout << "[***] Scan end point is [x, y, z] = [" << x_e << ", " << y_e << ", " << z_e << "]" << std::endl;
+      std::cout << "[***] Scan end point is [x, y, z] = [" << x_e << ", " << y_e << ", " << z_e << "]" << std::endl << std::endl;
     }
   }
 
