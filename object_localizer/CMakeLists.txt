@@ -23,7 +23,7 @@ catkin_package(
   #  INCLUDE_DIRS include
   #  LIBRARIES object_localizer
   #  CATKIN_DEPENDS roscpp rospy std_msgs
-  #  DEPENDS system_lib
+  CATKIN_DEPENDS roscpp std_msgs object_localizer_msg
 )
 
 include_directories(
@@ -42,10 +42,16 @@ add_executable(pc_writer src/pc_writer.cpp)
 target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(rough_localizer src/rough_localizer.cpp)
+add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(box_segmenter src/box_segmenter.cpp)
+add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
 target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scan_planner src/scan_planner.cpp)
+add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
 target_link_libraries(scan_planner ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(rivet_localizer src/rivet_localizer.cpp)
+target_link_libraries(rivet_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})

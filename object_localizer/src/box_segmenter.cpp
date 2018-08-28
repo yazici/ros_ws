@@ -37,70 +37,13 @@
 namespace bg = boost::geometry;
 typedef bg::model::point<double, 2, bg::cs::cartesian> point_t_b;
 typedef bg::model::box<point_t_b> box_t_b;
-
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
-
 std::string camera_frame = "camera_depth_optical_frame";
-
-// function used to show the merged point cloud and calculated surface normal
-// void Visualize ( PointCloudT::Ptr cloud, pcl::PointCloud<pcl::Normal>::Ptr normals )
-// {
-// 	std::printf ( "Visualizing point clouds...\n" );
-// 	pcl::visualization::PCLVisualizer viewer ( "Merged Point Clouds" );
-// 	int v1(0);
-// 	viewer.createViewPort ( 0.0, 0.0, 1.0, 1.0, v1 );
-//
-// 	// The color we will be using
-// 	float bckgr_gray_level = 0.0; // Black
-// 	float txt_gray_lvl = 1.0 - bckgr_gray_level;
-//
-// 	// ICP aligned point cloud
-// 	pcl::visualization::PointCloudColorHandlerRGBField< PointT > cloud_in_color_i ( cloud );
-// 	viewer.addPointCloud ( cloud, cloud_in_color_i, "cloud_icp_v1", v1 );
-// 	viewer.setPointCloudRenderingProperties ( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud_icp_v1" );
-// 	//Add normals
-// 	viewer.addPointCloudNormals < pcl::PointXYZRGB, pcl::Normal > ( cloud, normals, 10, 0.01, "normals" );
-// 	// Set background color
-// 	viewer.setBackgroundColor ( bckgr_gray_level, bckgr_gray_level, bckgr_gray_level, v1 );
-// 	// Set camera position and orientation
-// 	viewer.setCameraPosition ( -0.0611749, -0.040113, 0.00667606, -0.105521, 0.0891437, 0.990413 );
-// 	viewer.setSize ( 1280, 1024 ); // Visualiser window size
-//
-// 	// Display the visualiser
-// 	while ( !viewer.wasStopped () )
-//   {
-//     viewer.spinOnce ();
-// 	}
-// }
 
 class BoxSegmenter
 {
 public:
-
-  // void get_surface_normal( PointCloudT::Ptr cloud )
-  // {
-  //   // compute surface normals
-  // 	std::printf( "Computing surface normals...\n" );
-  // 	// Create the normal estimation class, and pass the input dataset to it
-  //   pcl::NormalEstimation< PointT, pcl::Normal > ne;
-  //   ne.setInputCloud ( cloud );
-	//
-  //   // Create an empty kdtree representation, and pass it to the normal estimation object.
-  //   // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-  //   pcl::search::KdTree< PointT >::Ptr tree ( new pcl::search::KdTree< PointT > () );
-  //   ne.setSearchMethod ( tree );
-  //   // Output datasets
-  //   pcl::PointCloud< pcl::Normal >::Ptr cloud_normals ( new pcl::PointCloud< pcl::Normal > );
-  //   // Use all neighbors in a sphere of radius 2cm
-  //   ne.setRadiusSearch ( 0.02 );
-  //   // Compute the features
-  //   ne.compute ( *cloud_normals );
-	//
-  // 	// cloud_normals->points.size () should have the same size as the input cloud->points.size ()*
-  // 	std::printf( "cloud size: %lu; normals size: %lu\n", cloud->points.size(), cloud_normals->points.size() );
-  // 	//Visualize( cloud, cloud_normals );
-  // }
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
@@ -237,7 +180,6 @@ private:
 int main( int argc, char** argv )
 {
   ros::init ( argc, argv, "box_segmenter" );
-  // ros::NodeHandle n;
   BoxSegmenter BS;
   ros::spin ();
   return 0;

@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <ctime>
 
 #include <sensor_msgs/PointCloud2.h>
@@ -23,8 +25,9 @@
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 ros::Time sample_time;
+static int pc_counter = 0;
 
-class PointCloudMerger
+class PointCloudWriter
 {
 public:
 
@@ -49,25 +52,21 @@ public:
 		std::cin >> answer;
 		if ( answer == 'Y')
 		{
-			std::printf("Saving point cloud to file...\n");
-			static int pc_counter = 0;
-			std::cout << "pc_counter = " << pc_counter << std::endl;
-			std::string pc_counter_string;
-			std::cin >> pc_counter_string;
-			pcl::PLYWriter writer;
-			writer.write ( "/home/syn/ros_ws/src/object_localizer/pc/pc_out_" + pc_counter_string + ".ply", *scene_cloud_ );
+      std::string pc_file_path = "/home/syn/ros_ws/src/object_localizer/pc/pc_out_" + std::to_string ( pc_counter ) + ".ply";
+			std::cout << "Saving point cloud to file: \n\t" << pc_file_path << std::endl;
+			writer.write ( pc_file_path, *scene_cloud_ );
 			pc_counter++;
 		}
   }
 
-  PointCloudMerger () : scene_cloud_ ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/profile_merger/points" )
+  PointCloudWriter () : scene_cloud_ ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/profile_merger/points" )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &PointCloudMerger::cloud_cb, this );
+    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &PointCloudWriter::cloud_cb, this );
     std::string r_ct = nh_.resolveName ( cloud_topic_ );
     ROS_INFO_STREAM ( "Listening point cloud message on topic " << r_ct );
   }
 
-  ~PointCloudMerger () { }
+  ~PointCloudWriter () { }
 
 private:
 
@@ -75,14 +74,35 @@ private:
   pcl::PointCloud<PointT>::Ptr scene_cloud_;
   std::string cloud_topic_;
   ros::Subscriber cloud_sub_;
+  pcl::PLYWriter writer;
 };
+
+void CfgFileReader ()
+{
+  std::string pack_path = ros::package::getPath ( "object_localizer" );
+  std::cout << "***The path for package [object_localizer] is: [" << pack_path << "]" << std::endl;
+  std::string cfgFileName = pack_path + "/config/pc_writer.cfg";
+  std::cout << "***The path of the pc_writer configuration file is: [" << cfgFileName << "]" << std::endl;
+
+  std::ifstream input ( cfgFileName );
+  std::string line;
+  if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+    std::string cmd;
+    iss >> pc_counter;
+    std::cout << "***pc_counter = [" << pc_counter << "]" << std::endl;
+  }
+  input.close();
+}
 
 int main ( int argc, char** argv )
 {
 	ros::init ( argc, argv, "pc_writer" );
   ros::NodeHandle n;
-	PointCloudMerger pcm;
+  CfgFileReader ();
+	PointCloudWriter pcw;
 	ros::spin ();
-	ros::shutdown();
+	ros::shutdown ();
   return 0;
 }
