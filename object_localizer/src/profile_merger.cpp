@@ -44,21 +44,43 @@ void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 	std::printf( "Downsampled cloud size is %d, %d\n", cloud_sampled->width, cloud_sampled->height );
 }
 
-void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out )
+class ProfileMerger
 {
-	static tf::TransformListener listener( ros::Duration(20), true );
-  tf::StampedTransform transform;
-	try
+public:
+
+	void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out )
 	{
-		// sample_time
-    listener.lookupTransform( "world", scanner_frame, sample_time, transform );
-		std::cout << "tf time difference is " << ros::Time::now() - sample_time << std::endl;
+	  tf::StampedTransform transform;
+		bool is_lookuped = false;
+		while ( is_lookuped == false )
+		{
+			try
+			{
+				// ros::Time(0) or sample_time
+		    listener.lookupTransform( "world", scanner_frame, sample_time, transform );
+				is_lookuped = true;
+		  }
+		  catch ( tf::TransformException ex )
+		  {
+				if ( boost::starts_with ( ex.what(), "Lookup would require extrapolation into the future." ) )
+				{
+					// wait for 0.05 second every time
+					ros::Duration ( 0.05 ) .sleep ();
+				} else
+				{
+					ROS_ERROR ( "%s", ex.what() );
+					return;
+				}
+		  }
+		}
+
+		// std::cout << "tf time difference is " << ros::Time::now() - sample_time << std::endl;
 		tf::Vector3 point(0, 0, 0);
 		tf::Vector3 point_n(0, 0, 0);
-		std::cout << "input point cloud has " << cloud->size() << " points" << std::endl;
+		// std::cout << "input point cloud has " << cloud->size() << " points" << std::endl;
 		for ( PointT temp_point : cloud->points )
-	 	{
-		 	point.setX( temp_point.x );
+		{
+			point.setX( temp_point.x );
 			point.setY( temp_point.y );
 			point.setZ( temp_point.z );
 			tf::Vector3 point_n = transform * point;
@@ -66,17 +88,8 @@ void transform_point_cloud ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_out 
 			temp_point.y = point_n.getY();
 			temp_point.z = point_n.getZ();
 			cloud_out->points.push_back (temp_point);
-	 	}
-  }
-  catch ( tf::TransformException ex )
-  {
-    ROS_ERROR("%s", ex.what());
-  }
-}
-
-class PointCloudMerger
-{
-public:
+		}
+	}
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
@@ -118,9 +131,12 @@ public:
     cloud_pub_.publish ( scene_cloud_total );
   }
 
-  PointCloudMerger () : scene_cloud_ ( new pcl::PointCloud< PointT > ), scene_cloud_total ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/me_2900/me_2900_laser_scan" )
+  ProfileMerger () : scene_cloud_ ( new pcl::PointCloud< PointT > ), scene_cloud_total ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/me_2900/me_2900_laser_scan" )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &PointCloudMerger::cloud_cb, this );
+		// wait for half second.
+		ros::Duration(0.5).sleep();
+
+    cloud_sub_ = nh_.subscribe ( cloud_topic_, 100, &ProfileMerger::cloud_cb, this );
     std::string r_ct = nh_.resolveName ( cloud_topic_ );
     ROS_INFO_STREAM ( "Listening point cloud message on topic " << r_ct );
 
@@ -129,11 +145,11 @@ public:
     ROS_INFO_STREAM ( "Publishing point cloud message on topic " << p_ct );
   }
 
-  ~PointCloudMerger () { }
+  ~ProfileMerger () { }
 
 private:
-
   ros::NodeHandle nh_;
+	tf::TransformListener listener;
   pcl::PointCloud<PointT>::Ptr scene_cloud_;
 	pcl::PointCloud<PointT>::Ptr scene_cloud_total;
   std::string cloud_topic_;
@@ -144,9 +160,10 @@ private:
 int main ( int argc, char** argv )
 {
 	ros::init ( argc, argv, "profile_merger" );
-  ros::NodeHandle n;
-	PointCloudMerger pcm;
-	ros::spin ();
-	ros::shutdown();
+	ProfileMerger pm;
+	// Use 4 threads
+	ros::AsyncSpinner spinner(4);
+  spinner.start();
+  ros::waitForShutdown();
   return 0;
 }

@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <ctime>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <ctime>
-
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
-
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 #include <pcl/io/ply_io.h>
 #include <pcl/point_types.h>
@@ -20,12 +21,12 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/features/normal_3d.h>
-#include <pcl/io/ply_io.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/common/transforms.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
@@ -34,6 +35,80 @@ std::string SceneFileName;
 int filter_mean_k = 40;
 float filter_stddev = 1.0;
 float scale_factor = 1.0;
+float rivet_height = 0.007; // unit meter
+float rivet_radius = 0.007; // unit meter
+
+// define the union-find data structure
+class UF
+{
+	int cnt, *id, *sz;
+public:
+	// Create an empty union find data structure with N isolated sets.
+	UF ( int N )
+	{
+		cnt = N;
+		id = new int[N];
+		sz = new int[N];
+		for ( int i = 0; i < N; i++ )
+		{
+			id[i] = i;
+	    sz[i] = 1;
+		}
+	}
+
+	~UF ()
+	{
+		delete [] id;
+		delete [] sz;
+	}
+
+	// Return the id of component corresponding to object p.
+	int find ( int p )
+	{
+		int root = p;
+		while ( root != id [ root ] )
+			root = id[root];
+		while ( p != root )
+		{
+			int newp = id [ p ];
+      id [ p ] = root;
+      p = newp;
+    }
+		return root;
+	}
+
+	// Replace sets containing x and y with their union.
+  void merge ( int x, int y )
+	{
+		int i = find ( x );
+		int j = find ( y );
+		if ( i == j ) return;
+
+		// make smaller root point to larger one
+		if ( sz [ i ] < sz [ j ] )
+		{
+			id [ i ] = j;
+			sz [ j ] += sz [ i ];
+		} else
+		{
+			id [ j ] = i;
+			sz [ i ] += sz [ j ];
+		}
+    cnt--;
+  }
+
+	// Are objects x and y in the same set?
+	bool connected ( int x, int y )
+	{
+		return find ( x ) == find ( y );
+  }
+
+	// Return the number of disjoint sets.
+	int count()
+	{
+		return cnt;
+  }
+};
 
 // function used to show the point cloud and surface normal
 void Visualize ( PointCloudT::Ptr cloud_in_transformed, PointCloudT::Ptr planar_cloud, PointCloudT::Ptr cloud_rivet ) // pcl::PointCloud< pcl::Normal >::Ptr normals
@@ -178,8 +253,46 @@ void getMinMax3D (const pcl::PointCloud<PointT> &cloud, PointT &min_pt, PointT &
   max_pt.x = max_p[0]; max_pt.y = max_p[1]; max_pt.z = max_p[2];
 }
 
+void getInverseMatrix ( Eigen::Matrix4f& original_transform, Eigen::Matrix4f& inverse_transform )
+{
+	inverse_transform.block< 3, 3 >( 0, 0 ) = original_transform.block< 3, 3 >( 0, 0 ).transpose();
+  inverse_transform.block< 3, 1 >( 0, 3 ) = -1.0f * ( inverse_transform.block< 3, 3 >( 0, 0 ) * original_transform.block< 3, 1 >( 0, 3 ) );
+}
+
+void show_frame ( std::string frame_name, double x, double y, double z, double roll, double pitch, double yaw )
+{
+  static tf2_ros::StaticTransformBroadcaster br;
+	geometry_msgs::TransformStamped transformStamped;
+	// create a frame for each object
+  transformStamped.header.stamp = ros::Time::now();
+  transformStamped.header.frame_id = "world";
+  transformStamped.child_frame_id = frame_name;
+  transformStamped.transform.translation.x = x;
+  transformStamped.transform.translation.y = y;
+  transformStamped.transform.translation.z = z;
+  tf2::Quaternion q;
+  q.setRPY(roll, pitch, yaw);
+  transformStamped.transform.rotation.x = q.x();
+  transformStamped.transform.rotation.y = q.y();
+  transformStamped.transform.rotation.z = q.z();
+  transformStamped.transform.rotation.w = q.w();
+  ros::Rate loop_rate(10);
+  for ( int i = 0; i < 10; i++ )
+	{
+      br.sendTransform(transformStamped);
+      loop_rate.sleep();
+  }
+  std::cout << "\tFrame " << frame_name << " is added\n";
+}
+
+void get_rpy_from_matrix ( Eigen::Matrix3f rotation_matrix, double& roll, double& pitch, double& yaw )
+{
+  tf::Matrix3x3 object_m ( rotation_matrix (0, 0), rotation_matrix (0, 1), rotation_matrix (0, 2), rotation_matrix (1, 0), rotation_matrix (1, 1), rotation_matrix (1, 2), rotation_matrix (2, 0), rotation_matrix (2, 1), rotation_matrix (2, 2) );
+  object_m.getRPY ( roll, pitch, yaw );
+}
+
 // function for finding planars
-int find_planar ( PointCloudT::Ptr cloud_in )
+int find_rivet ( PointCloudT::Ptr cloud_in )
 {
 	// filter, downsampling, and scaling the input point cloud and change the color of each point
 	PointCloudT::Ptr cloud_filtered	( new PointCloudT );
@@ -260,27 +373,33 @@ int find_planar ( PointCloudT::Ptr cloud_in )
 	std::cout << "transform_2 = \n" << transform_2 << std::endl;
 	std::cout << "transform_1 = \n" << transform_1 << std::endl;
 	std::cout << "transform_total = \n" << transform_total << std::endl;
+
 	scale_and_color_point_cloud ( cloud_in, cloud_in_transformed );
 	pcl::transformPointCloud( *cloud_in_transformed, *cloud_in_transformed, transform_total );
 
 	float planar_coef_abs [3] = { std::abs( planar_coef [0] ), std::abs( planar_coef [1] ), std::abs( planar_coef [2] ) };
 	int max_idx = std::distance ( planar_coef_abs, std::max_element ( planar_coef_abs, planar_coef_abs + 3 ) );
 	std::cout << "***Max_idx = " << max_idx << std::endl;
-	// set the color of rivet
+	// set the color of the rivet point cloud
 	r = 0, g = 255, b = 0;
 	rgb = ( static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b) );
 	PointCloudT::Ptr cloud_rivet ( new PointCloudT );
 	int cloud_rivet_counter = 0;
+	// double sum_x = 0.0;
 	if ( max_idx == 0 )
 	{
 		for ( PointT temp_point: cloud_in_transformed->points )
 	  {
 			float x = temp_point.x;
+			float x_compare = std::abs ( std::abs( x ) - rivet_height );
 			float y = temp_point.y;
 			float z = temp_point.z;
-			if ( y >= minPoint.y && y <= maxPoint.y && z >= minPoint.z && z <= maxPoint.z && ( x >= maxPoint.x || x <= minPoint.x ) )
+			// float x_comp = std::max ( std::abs ( maxPoint.x ), std::abs ( minPoint.x ) );
+			if ( y >= minPoint.y && y <= maxPoint.y && z >= minPoint.z && z <= maxPoint.z
+					 && x_compare <= 0.0005 )
 			{
 		    PointT new_point;
+				// sum_x += x;
 		    new_point.x = x;
 		    new_point.y = y;
 		    new_point.z = z;
@@ -293,6 +412,110 @@ int find_planar ( PointCloudT::Ptr cloud_in )
 	cloud_rivet->width = cloud_rivet_counter;
   cloud_rivet->height = 1;
   cloud_rivet->header.frame_id = "world";
+	std::cout << "***cloud_rivet has " << cloud_rivet_counter << " data points" << std::endl;
+	// std::cout << "***average x = " << sum_x / cloud_rivet_counter << std::endl;
+
+	// partition the rivet cloud to seperate rivets
+	pcl::KdTreeFLANN < PointT > kdtree;
+  kdtree.setInputCloud ( cloud_rivet );
+	std::vector< Eigen::Vector4f > rivet_vector;
+	UF cloud_rivet_uf ( cloud_rivet_counter );
+	int rivet_counter = 0;
+	for ( size_t i = 0; i < cloud_rivet->points.size (); ++i )
+	{
+		PointT searchPoint = cloud_rivet->points[i];
+		if ( cloud_rivet_uf.find ( i ) == i )
+		{
+			// search for points within some distance
+			std::vector<int> pointIdx;
+			std::vector<float> pointRadius;
+			double x_sum = searchPoint.x;
+			double y_sum = searchPoint.y;
+			double z_sum = searchPoint.z;
+			double x_max = searchPoint.x;
+			double y_max = searchPoint.y;
+			double z_max = searchPoint.z;
+			if ( kdtree.radiusSearch ( searchPoint, rivet_radius, pointIdx, pointRadius ) > 0 )
+			{
+				rivet_counter++;
+				r = rivet_counter % 5 * 50;
+				g = rivet_counter % 3 * 80;
+				b = rivet_counter % 7 * 30;
+				if ( r == 0 && g == 0 && b == 0 )
+				{
+					r = 255;
+					g = 125;
+					b = 55;
+				}
+				rgb = ( static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b) );
+				for ( size_t j = 0; j < pointIdx.size (); ++j )
+				{
+					cloud_rivet_uf.merge ( i, pointIdx[j] );
+					x_sum += cloud_rivet->points[ pointIdx[j] ].x;
+					y_sum += cloud_rivet->points[ pointIdx[j] ].y;
+					z_sum += cloud_rivet->points[ pointIdx[j] ].z;
+					if ( y_max < cloud_rivet->points[ pointIdx[j] ].y )
+					{
+						y_max = cloud_rivet->points[ pointIdx[j] ].y;
+					}
+					if ( z_max < cloud_rivet->points[ pointIdx[j] ].z )
+					{
+						z_max = cloud_rivet->points[ pointIdx[j] ].z;
+					}
+					cloud_rivet->points[ pointIdx[j] ].rgb = *reinterpret_cast<float*> ( &rgb );
+				}
+				int rivet_point_counter = pointIdx.size () + 1;
+				double x_avg = x_sum / rivet_point_counter;
+				double y_avg = y_sum / rivet_point_counter;
+				double z_avg = z_sum / rivet_point_counter;
+				double real_radius = std::sqrt ( std::pow ( ( y_max - y_avg ) , 2 ) + std::pow ( ( z_max - z_avg ) , 2 ) ) * 2.0;
+				if ( real_radius > 0.003 )
+				{
+					Eigen::Vector4f rivet_point;
+					rivet_point << (x_avg + 0.01), y_avg, z_avg, 1.0;
+					rivet_vector.push_back ( rivet_point );
+					std::cout << "*** [" << rivet_counter << "] : rivet center = [" << x_avg << ", "
+					 					<< y_avg << ", " << z_avg << "]" << std::endl;
+					// std::cout << "*** [" << rivet_counter << "] : rivet center = [" << rivet_point << std::endl;
+					std::cout << "*** real_radius = " << real_radius << std::endl;
+				}
+			}
+		}
+	}
+	std::cout << "rivet_vector.size() = " << rivet_vector.size() << std::endl;
+
+	Eigen::Matrix4f transform_total_inverse ( Eigen::Matrix4f::Identity() );
+	getInverseMatrix ( transform_total, transform_total_inverse );
+	double roll, pitch, yaw;
+	get_rpy_from_matrix( transform_total_inverse.block< 3, 3 >( 0, 0 ), roll, pitch, yaw );
+	if ( roll < 0.0 )
+	{
+		roll = 3.1415926 + roll;
+	}
+	std::cout << "transform_total_inverse = \n" << transform_total_inverse << std::endl;
+	std::cout << "roll, pitch, yaw = \n" << roll << ", " << pitch << ", " << yaw << std::endl;
+
+	ofstream point_rivet_fs;
+  std::string cfgFileName = ros::package::getPath ( "object_localizer" ) + "/config/point_rivet.cfg";
+  point_rivet_fs.open ( cfgFileName );
+	rivet_counter = 0;
+	std::vector< Eigen::Vector4f > rivet_vector_final;
+	for ( Eigen::Vector4f rivet_point : rivet_vector )
+	{
+		Eigen::Vector4f rivet_point_final;
+		Eigen::Vector4f rivet_point_in, rivet_point_in_final;
+		rivet_point_in << 0.0, rivet_point ( 1 ), rivet_point ( 2 ), 1.0;
+		rivet_point_final = transform_total_inverse * rivet_point;
+		rivet_point_in_final = transform_total_inverse * rivet_point_in;
+		rivet_vector_final.push_back ( rivet_point_final );
+		std::cout << "*** [" << rivet_counter << "] : " << rivet_point_final.head< 3 >().transpose() << " " << roll << " " << pitch << " " << yaw << std::endl;
+		show_frame ( "rivet_" + std::to_string ( rivet_counter ), rivet_point_final ( 0 ), rivet_point_final ( 1 ), rivet_point_final ( 2 ), roll, pitch, yaw );
+		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
+		point_rivet_fs << rivet_counter << " " << rivet_point_in_final ( 0 ) << " " << rivet_point_in_final ( 1 ) << " " << rivet_point_in_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
+		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
+		rivet_counter ++;
+	}
+	point_rivet_fs.close();
 
 	// show the point cloud
   std::printf ( "Visualizing point clouds...\n" );
@@ -309,16 +532,14 @@ public:
     std::string SceneFilePath = ros::package::getPath ( "object_localizer" ) + "/data/" + SceneFileName;
     if ( pcl::io::loadPLYFile ( SceneFilePath, *scene_cloud_ ) == -1 )
     {
-      ROS_INFO_STREAM ( "Couldn't read file: " << SceneFilePath << std::endl );
+      ROS_ERROR_STREAM ( "Couldn't read file: " << SceneFilePath << std::endl );
       return;
     }
     std::cout << "Loaded " << scene_cloud_->width * scene_cloud_->height << " data points from " << SceneFilePath << std::endl;
-    find_planar ( scene_cloud_ );
+    find_rivet ( scene_cloud_ );
   }
 
-  RivetLocalizer () : scene_cloud_ ( new pcl::PointCloud< PointT > )
-  {
-  }
+  RivetLocalizer () : scene_cloud_ ( new pcl::PointCloud< PointT > ) { }
 
   ~RivetLocalizer () { }
 
@@ -344,9 +565,21 @@ void CfgFileReader ()
   }
 	if ( std::getline ( input, line ) )
   {
-    std::istringstream iss ( line );
-    iss >> filter_mean_k >> filter_stddev;
-    std::cout << "***filter_mean_k = [" << filter_mean_k << "] filter_stddev = [" << filter_stddev << "]" << std::endl;
+		if ( !boost::starts_with ( line, "#" ) )
+		{
+	    std::istringstream iss ( line );
+	    iss >> filter_mean_k >> filter_stddev;
+	    std::cout << "***filter_mean_k = [" << filter_mean_k << "] filter_stddev = [" << filter_stddev << "]" << std::endl;
+		}
+  }
+	if ( std::getline ( input, line ) )
+  {
+		if ( !boost::starts_with ( line, "#" ) )
+		{
+			std::istringstream iss ( line );
+	    iss >> rivet_height >> rivet_radius;
+	    std::cout << "***rivet_height = [" << rivet_height << "] rivet_radius = [" << rivet_radius << "]" << std::endl;
+		}
   }
   input.close();
 }

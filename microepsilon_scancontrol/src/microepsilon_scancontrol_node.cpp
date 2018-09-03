@@ -43,7 +43,7 @@ namespace microepsilon_scancontrol
 
   ScannerNode::ScannerNode ( unsigned int shutter_time, unsigned int idle_time, double lag_compensation, std::string topic, std::string frame, std::string serial_number, std::string path_to_device_properties ) : laser_ ( this, shutter_time, idle_time, serial_number, path_to_device_properties ) , lag_compensation_ ( lag_compensation ), frame_ ( frame )
   {
-    scan_pub_ = nh_.advertise < PointCloudT > (  topic, 50 );
+    scan_pub_ = nh_.advertise < PointCloudT > (  topic, 200 );
     laser_off_ = nh_.advertiseService ( "laser_off", &ScannerNode::laser_off, this );
     laser_on_ = nh_.advertiseService ( "laser_on", &ScannerNode::laser_on, this );
     publishing_ = true;

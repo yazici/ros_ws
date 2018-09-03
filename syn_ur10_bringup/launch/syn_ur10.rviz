@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1/Planning Request1
+        - /Axes2
+        - /Axes3
       Splitter Ratio: 0.648541093
     Tree Height: 368
   - Class: rviz/Selection
@@ -137,6 +139,25 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          rivet_tool:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          rivet_tool_part_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          rivet_tool_part_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          rivet_tool_part_3:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           scan:
             Alpha: 1
             Show Axes: false
@@ -326,6 +347,25 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          rivet_tool:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          rivet_tool_part_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          rivet_tool_part_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          rivet_tool_part_3:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           scan:
             Alpha: 1
             Show Axes: false
@@ -585,10 +625,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 1.20000005
+      Length: 0.100000001
       Name: Axes
-      Radius: 0.0299999993
-      Reference Frame: world
+      Radius: 0.00999999978
+      Reference Frame: rivet_tool
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -620,6 +660,13 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.100000001
+      Name: Axes
+      Radius: 0.00999999978
+      Reference Frame: rivet_0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -645,25 +692,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.64295864
+      Distance: 3.19328809
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.225267649
-        Y: -1.63529873
-        Z: 1.74359155
+        X: 0.162438571
+        Y: -0.68846333
+        Z: 1.34900784
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: -0.0625167191
+      Pitch: 0.804797053
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.01012373
+      Yaw: 4.8350749
     Saved: ~
 Window Geometry:
   Displays:

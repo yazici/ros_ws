@@ -50,3 +50,6 @@ target_link_libraries(move_camera ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(do_scan src/do_scan.cpp)
 target_link_libraries(do_scan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(point_rivet src/point_rivet.cpp)
+target_link_libraries(point_rivet ${catkin_LIBRARIES} ${Boost_LIBRARIES})
