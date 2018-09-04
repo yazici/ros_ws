@@ -1,13 +1,17 @@
 # ros_ws
-The ros workspace repository
+The ros workspace repository, my work space for ros Kinetic.
 
-My work space for ros Kinetic
-
-## Including package for following sensors:
-  - the Kinect-2 sensor
-  - scanCONTROL_2900-50
-  - Pepperl+Fuchs R2000
-  - phasespace
-  - PMD CamBoard pico flexx
-  - RealSense
-  - ur_modern_driver
+## Including driver packages for the following hardware:
+  - Camera
+    - The Kinect-2 sensor
+    - The ZED stereo camera
+    - RealSense
+  - Distance sensor
+    - PMD CamBoard pico flexx
+    - Pepperl+Fuchs R2000
+    - ScanCONTROL_2900-50
+  - Tracking Systems
+    - Phasespace
+  - Robot
+    - Ur_modern_driver
+  
