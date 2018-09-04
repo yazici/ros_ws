@@ -1,0 +1,16 @@
+<launch>
+
+  <!-- start the neural network node -->
+  <node name="object_detector" pkg="object_localizer" type="object_detector.py" respawn="true" output="screen">
+    <!-- <param name="frame_id" value="base_link" /> -->
+  </node>
+
+  <!-- start the node which provides the services "add_aircraft_frame" and "remove_aircraft_frame" -->
+  <node name="add_and_remove_aircraft_frame" pkg="model_loader" type="add_and_remove_aircraft_frame" respawn="true" output="screen">
+  </node>
+
+  <!-- start the node which provides the services "start_move_camera" and "stop_move_camera" -->
+  <node name="move_camera" pkg="motion_control" type="move_camera" respawn="true" output="screen">
+  </node>
+
+</launch>

@@ -20,6 +20,7 @@ find_package(catkin REQUIRED
     geometric_shapes
     tf2
     tf2_ros
+    std_srvs
 )
 
 find_package(Boost REQUIRED system filesystem date_time thread)
@@ -44,6 +45,9 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 add_executable(motion_control src/motion_control.cpp)
 target_link_libraries(motion_control ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(control_node src/control_node.cpp)
+target_link_libraries(control_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(move_camera src/move_camera.cpp)
 target_link_libraries(move_camera ${catkin_LIBRARIES} ${Boost_LIBRARIES})
