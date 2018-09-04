@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   pcl_conversions
   laser_geometry
+  std_srvs
 )
 
 catkin_package(
