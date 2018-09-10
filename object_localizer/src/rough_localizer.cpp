@@ -316,6 +316,6 @@ int main ( int argc, char** argv )
   ros::AsyncSpinner spinner ( 4 );
   spinner.start ();
   RoughLocalizer RL;
-  ros::shutdown ();
+  ros::waitForShutdown ();
   return 0;
 }

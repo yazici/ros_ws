@@ -199,6 +199,6 @@ int main ( int argc, char** argv )
   ros::AsyncSpinner spinner ( 4 );
   spinner.start ();
   BoxSegmenter BS;
-  ros::shutdown ();
+  ros::waitForShutdown ();
   return 0;
 }

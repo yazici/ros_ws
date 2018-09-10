@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <ros/package.h>
 #include <ctime>
 
@@ -45,43 +46,41 @@ public:
     pcl_conversions::toPCL( *cloud, pcl_pc2 );
     pcl::fromPCLPointCloud2 ( pcl_pc2, *scene_cloud_ );
 		sample_time = cloud->header.stamp;
-		std::cout << "[" << sample_time << "] Input point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
 
-		std::cout << "Save the point cloud?" << std::endl;
-		char answer;
-		std::cin >> answer;
-		if ( answer == 'Y')
-		{
-      std::string pc_file_path = "/home/syn/ros_ws/src/object_localizer/pc/pc_out_" + std::to_string ( pc_counter ) + ".ply";
-			std::cout << "Saving point cloud to file: \n\t" << pc_file_path << std::endl;
-			writer.write ( pc_file_path, *scene_cloud_ );
-			pc_counter++;
-		}
   }
 
-  PointCloudWriter () : scene_cloud_ ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/profile_merger/points" )
+  bool start_point_cloud_writer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &PointCloudWriter::cloud_cb, this );
-    std::string r_ct = nh_.resolveName ( cloud_topic_ );
-    ROS_INFO_STREAM ( "Listening point cloud message on topic " << r_ct );
+    std::cout << "[" << sample_time << "] Profile point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
+    std::string pc_file_path = ros::package::getPath ( "object_localizer" )+ "/pc/pc_out_" + std::to_string ( pc_counter ) + ".ply";
+		std::cout << "Saving point cloud to file: \n\t" << pc_file_path << std::endl;
+		writer.write ( pc_file_path, *scene_cloud_ );
+    return true;
+  }
+
+  PointCloudWriter () : scene_cloud_ ( new pcl::PointCloud< PointT > )
+  {
+    start_point_cloud_writer_ = nh_.advertiseService ( "start_point_cloud_writer", &PointCloudWriter::start_point_cloud_writer, this );
+		ros::Duration ( 1 ).sleep ();
+
+    std::string cloud_in_name = "/profile_merger/points";
+    cloud_sub_ = nh_.subscribe ( cloud_in_name, 3, &PointCloudWriter::cloud_cb, this );
+    ROS_INFO_STREAM ( "Listening point cloud message on topic " << cloud_in_name );
   }
 
   ~PointCloudWriter () { }
 
 private:
-
   ros::NodeHandle nh_;
   pcl::PointCloud<PointT>::Ptr scene_cloud_;
-  std::string cloud_topic_;
+  ros::ServiceServer start_point_cloud_writer_;
   ros::Subscriber cloud_sub_;
   pcl::PLYWriter writer;
 };
 
 void CfgFileReader ()
 {
-  std::string pack_path = ros::package::getPath ( "object_localizer" );
-  std::cout << "***The path for package [object_localizer] is: [" << pack_path << "]" << std::endl;
-  std::string cfgFileName = pack_path + "/config/pc_writer.cfg";
+  std::string cfgFileName = ros::package::getPath ( "object_localizer" ) + "/config/pc_writer.cfg";
   std::cout << "***The path of the pc_writer configuration file is: [" << cfgFileName << "]" << std::endl;
 
   std::ifstream input ( cfgFileName );
@@ -99,10 +98,10 @@ void CfgFileReader ()
 int main ( int argc, char** argv )
 {
 	ros::init ( argc, argv, "pc_writer" );
-  ros::NodeHandle n;
+  ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
   CfgFileReader ();
 	PointCloudWriter pcw;
-	ros::spin ();
-	ros::shutdown ();
+	ros::waitForShutdown ();
   return 0;
 }

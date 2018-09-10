@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <std_srvs/Empty.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -139,7 +140,8 @@ void calculate_bounding_box ( PointCloudT::ConstPtr cloudSegmented )
   }
 }
 
-template <typename T> int sgn(T val) {
+template < typename T > int sgn ( T val )
+{
     return (T(0) < val) - (val < T(0));
 }
 
@@ -240,10 +242,12 @@ public:
           std::cout << "[***] Scan end point is [x, y, z] = [" << x_e << ", " << y_e << ", " << z_e << "]" << std::endl << std::endl;
           do_scan_fs << theta << " " << x_s << " " << y_s << " " << z_s << " " << x_e << " " << y_e << " " << z_e << std::endl;
         }
-        bbox_idx++;
+        bbox_idx ++;
       }
     	do_scan_fs.close();
       is_publish_ = false;
+      std_srvs::Empty msg;
+      start_profile_scan_. call ( msg );
     }
   }
 
@@ -269,6 +273,8 @@ public:
     std::string segment_in_name = "/box_segmenter/segment_list";
     segment_list_sub_ = nh_.subscribe ( segment_in_name, 10, &ScanPlanner::segment_list_cb, this );
     ROS_INFO_STREAM ( "Listening for segment list on topic: " << segment_in_name );
+
+    start_profile_scan_ = nh_.serviceClient < std_srvs::Empty > ( "start_profile_scan" );
   }
 
   ~ScanPlanner () { }
@@ -278,6 +284,7 @@ private:
   bool is_publish_;
   ros::ServiceServer start_scan_planner_, stop_scan_planner_;
   ros::Subscriber segment_list_sub_;
+  ros::ServiceClient start_profile_scan_;
 };
 
 int main ( int argc, char** argv )
@@ -286,6 +293,6 @@ int main ( int argc, char** argv )
   ros::AsyncSpinner spinner ( 4 );
   spinner.start ();
   ScanPlanner SP;
-  ros::shutdown ();
+  ros::waitForShutdown();
   return 0;
 }

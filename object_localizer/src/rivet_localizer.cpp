@@ -6,6 +6,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -539,13 +540,24 @@ public:
     find_rivet ( scene_cloud_ );
   }
 
-  RivetLocalizer () : scene_cloud_ ( new pcl::PointCloud< PointT > ) { }
+	bool start_rivet_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  {
+    handle_scene_point_cloud ();
+    return true;
+  }
+
+  RivetLocalizer () : scene_cloud_ ( new pcl::PointCloud< PointT > )
+	{
+		start_rivet_localizer_ = nh_.advertiseService ( "start_rivet_localizer", &RivetLocalizer::start_rivet_localizer, this );
+		// ros::Duration ( 1 ).sleep ();
+	}
 
   ~RivetLocalizer () { }
 
 private:
   ros::NodeHandle nh_;
   pcl::PointCloud<PointT>::Ptr scene_cloud_;
+	ros::ServiceServer start_rivet_localizer_;
 };
 
 void CfgFileReader ()
@@ -587,10 +599,11 @@ void CfgFileReader ()
 int main ( int argc, char** argv )
 {
 	ros::init ( argc, argv, "rivet_localizer" );
+	ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
 	CfgFileReader ();
 	RivetLocalizer rl;
-  rl.handle_scene_point_cloud ();
-	ros::spin ();
-	ros::shutdown ();
+  // rl.handle_scene_point_cloud ();
+	ros::waitForShutdown ();
   return 0;
 }
