@@ -4,7 +4,10 @@
 #include <ctime>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf/transform_listener.h>
 
 // converse header file between ros points2 and pcl point cloud
 #include <pcl_conversions/pcl_conversions.h>
@@ -12,9 +15,6 @@
 #include "object_localizer_msg/BBox_float.h"
 #include "object_localizer_msg/BBox_list.h"
 #include "object_localizer_msg/Segment_list.h"
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf/transform_listener.h>
 
 // PCL head files
 #include <pcl/io/ply_io.h>
@@ -34,12 +34,13 @@
 #include <vector>
 #include <deque>
 
+std::string reference_frame = "world";
+
 namespace bg = boost::geometry;
 typedef bg::model::point<double, 2, bg::cs::cartesian> point_t_b;
 typedef bg::model::box<point_t_b> box_t_b;
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
-std::string camera_frame = "camera_depth_optical_frame";
 
 class BoxSegmenter
 {
@@ -61,9 +62,9 @@ public:
 
   void bbox_cb ( const object_localizer_msg::BBox_list::ConstPtr& bbox_list )
   {
-    if ( bbox_list->BBox_list_float.size() > 0 )
+    if ( is_publish_ && bbox_list->BBox_list_float.size() > 0 )
     {
-      object_localizer_msg::Segment_list::Ptr segment_list_msg( new object_localizer_msg::Segment_list() );
+      object_localizer_msg::Segment_list::Ptr segment_list_msg ( new object_localizer_msg::Segment_list () );
 
       // step 1, create the bounding box list
       std::vector<box_t_b> box_t_b_list;
@@ -107,7 +108,7 @@ public:
               g = 255;
               b = 255;
             }
-						uint32_t rgb = (static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+						uint32_t rgb = ( static_cast<uint32_t>(r) << 16 | static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b) );
 						new_point.rgb = *reinterpret_cast<float*>( &rgb );
             cropped_cloud->points.push_back( new_point );
             segment_cloud->points.push_back( new_point );
@@ -118,7 +119,7 @@ public:
 
         segment_cloud->width = segment_point_counter;
         segment_cloud->height = 1;
-        segment_cloud->header.frame_id = "world";
+        segment_cloud->header.frame_id = reference_frame;
         pcl_conversions::toPCL ( ros::Time::now(), segment_cloud->header.stamp );
         pcl::PCLPointCloud2 segment_cloud_pc2;
         pcl::toPCLPointCloud2 ( *segment_cloud, segment_cloud_pc2 );
@@ -132,55 +133,72 @@ public:
       cropped_cloud->width = point_counter;
       cropped_cloud->height = 1;
       std::cout << "cropped_cloud has " << cropped_cloud->size()  << std::endl;
-      cropped_cloud->header.frame_id = "world";
+      cropped_cloud->header.frame_id = reference_frame;
       pcl_conversions::toPCL ( ros::Time::now(), cropped_cloud->header.stamp );
       cloud_pub_.publish ( cropped_cloud );
 
-      segment_list_msg->header.frame_id = "world";
+      segment_list_msg->header.frame_id = reference_frame;
       segment_list_msg->header.stamp = ros::Time::now();
       segment_pub_.publish ( segment_list_msg );
     }
   }
 
-  BoxSegmenter () : saved_cloud ( new PointCloudT ), cloud_topic_ ( "/point_cloud_merger/points" ), bbox_topic_ ( "/rough_localizer/bbox_list" )
+  bool start_box_segmenter ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &BoxSegmenter::cloud_cb, this );
-    std::string cloud_in_name = nh_.resolveName ( cloud_topic_ );
+    is_publish_ = true;
+    return true;
+  }
+
+  bool stop_box_segmenter ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  {
+    is_publish_ = false;
+    return true;
+  }
+
+  BoxSegmenter () : saved_cloud ( new PointCloudT )
+  {
+    is_publish_ = false;
+    start_box_segmenter_ = nh_.advertiseService ( "start_box_segmenter", &BoxSegmenter::start_box_segmenter, this );
+    stop_box_segmenter_ = nh_.advertiseService ( "stop_box_segmenter", &BoxSegmenter::stop_box_segmenter, this );
+    ros::Duration ( 1 ) .sleep ();
+
+    std::string cloud_in_name = "/point_cloud_merger/points";
+    cloud_sub_ = nh_.subscribe ( cloud_in_name, 30, &BoxSegmenter::cloud_cb, this );
     ROS_INFO_STREAM ( "Listening for point cloud on topic: " << cloud_in_name );
 
     std::string cloud_out_name = "/box_segmenter/points";
     cloud_pub_ = nh_.advertise < PointCloudT > ( cloud_out_name, 30 );
     ROS_INFO_STREAM ( "Publishing point cloud on topic: " << cloud_out_name );
 
-    bbox_sub_ = nh_.subscribe ( bbox_topic_, 6, &BoxSegmenter::bbox_cb, this );
-    std::string bbox_in_name = nh_.resolveName ( bbox_topic_ );
+    std::string bbox_in_name = "/rough_localizer/bbox_list";
+    bbox_sub_ = nh_.subscribe ( bbox_in_name, 6, &BoxSegmenter::bbox_cb, this );
     ROS_INFO_STREAM ( "Listening for bounding box list on topic: " << bbox_in_name );
 
     std::string segment_out_name = "/box_segmenter/segment_list";
-    segment_pub_ = nh_.advertise < object_localizer_msg::Segment_list > ( segment_out_name, 30 );
+    segment_pub_ = nh_.advertise < object_localizer_msg::Segment_list > ( segment_out_name, 6 );
     ROS_INFO_STREAM ( "Publishing segment list on topic: " << segment_out_name );
-
   }
 
   ~BoxSegmenter () { }
 
 private:
-
   ros::NodeHandle nh_;
   PointCloudT::Ptr saved_cloud;
-  std::string cloud_topic_;
+  bool is_publish_;
+  ros::ServiceServer start_box_segmenter_, stop_box_segmenter_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
-  std::string bbox_topic_;
   ros::Subscriber bbox_sub_;
   ros::Publisher segment_pub_;
   ros::Time sample_time;
 };
 
-int main( int argc, char** argv )
+int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "box_segmenter" );
+  ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
   BoxSegmenter BS;
-  ros::spin ();
+  ros::shutdown ();
   return 0;
 }

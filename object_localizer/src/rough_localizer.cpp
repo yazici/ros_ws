@@ -257,9 +257,9 @@ public:
     }
   }
 
-  bool start_rough_localizer( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  bool start_rough_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    is_publish_ = false;
+    is_publish_ = true;
     return true;
   }
 
