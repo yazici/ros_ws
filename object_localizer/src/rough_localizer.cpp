@@ -4,16 +4,16 @@
 #include <ctime>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf/transform_listener.h>
 
 // converse header file between ros points2 and pcl point cloud
 #include <pcl_conversions/pcl_conversions.h>
 #include "object_localizer_msg/BBox_int.h"
 #include "object_localizer_msg/BBox_float.h"
 #include "object_localizer_msg/BBox_list.h"
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf/transform_listener.h>
 
 // PCL head files
 #include <pcl_ros/point_cloud.h>
@@ -38,6 +38,7 @@ typedef bg::model::box<point_t_b> box_t_b;
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
+std::string reference_frame = "table_top";
 std::string camera_frame = "camera_depth_optical_frame";
 
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
@@ -81,7 +82,7 @@ public:
   void publish_box_t_b_list()
   {
     object_localizer_msg::BBox_list::Ptr bbox_list_msg( new object_localizer_msg::BBox_list() );
-    bbox_list_msg->header.frame_id = "world";
+    bbox_list_msg->header.frame_id = reference_frame;
     bbox_list_msg->header.stamp = ros::Time::now();
     for ( box_t_b box_tmp : box_t_b_list )
     {
@@ -163,6 +164,11 @@ public:
 
   void bbox_cb ( const object_localizer_msg::BBox_list::ConstPtr& bbox_list )
   {
+    if ( !is_publish_ )
+    {
+      return;
+    }
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud ( new PointCloudT );
     if ( bbox_list->BBox_list_int.size() > 0 )
     {
@@ -172,7 +178,7 @@ public:
       tf::StampedTransform transform;
       try
       {
-        tf_listener.lookupTransform( "world", camera_frame, sample_time, transform );
+        tf_listener.lookupTransform( reference_frame, camera_frame, sample_time, transform );
         std::cout << "Sample time for tf is " << sample_time << std::endl;
         std::cout << "Scene cloud has [frame_id, width, height]: " << saved_cloud->header.frame_id << ", " << saved_cloud->width << ", " << saved_cloud->height << std::endl;
         tf::Vector3 point(0, 0, 0);
@@ -240,7 +246,7 @@ public:
         PointCloudT::Ptr cropped_cloud_sampled	( new PointCloudT );
         downSampling ( cropped_cloud, cropped_cloud_sampled );
         std::cout << "cropped_cloud_sampled has " << cropped_cloud_sampled->size()  << std::endl;
-        cropped_cloud_sampled->header.frame_id = "world";
+        cropped_cloud_sampled->header.frame_id = reference_frame;
         pcl_conversions::toPCL ( ros::Time::now(), cropped_cloud_sampled->header.stamp );
         cloud_pub_.publish ( cropped_cloud_sampled );
       }
@@ -251,18 +257,37 @@ public:
     }
   }
 
-  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZ > ), cloud_topic_ ( "/camera/depth_registered/points" ), bbox_topic_ ( "/object_localizer/bbox_list" )
+  bool start_rough_localizer( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 30, &RoughLocalizer::cloud_cb, this );
-    std::string cloud_in_name = nh_.resolveName ( cloud_topic_ );
+    is_publish_ = false;
+    return true;
+  }
+
+  bool stop_rough_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  {
+    is_publish_ = false;
+    return true;
+  }
+
+  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZ > )
+  {
+    is_publish_ = false;
+
+    start_rough_localizer_ = nh_.advertiseService ( "start_rough_localizer", &RoughLocalizer::start_rough_localizer, this );
+    stop_rough_localizer_ = nh_.advertiseService ( "stop_rough_localizer", &RoughLocalizer::stop_rough_localizer, this );
+
+    ros::Duration ( 1 ) .sleep ();
+
+    std::string cloud_in_name = "/camera/depth_registered/points";
+    cloud_sub_ = nh_.subscribe ( cloud_in_name, 30, &RoughLocalizer::cloud_cb, this );
     ROS_INFO_STREAM ( "Listening for point cloud on topic: " << cloud_in_name );
 
     std::string cloud_out_name = "/rough_localizer/points";
     cloud_pub_ = nh_.advertise < pcl::PointCloud < pcl::PointXYZ > > ( cloud_out_name, 30 );
     ROS_INFO_STREAM ( "Publishing point cloud on topic: " << cloud_out_name );
 
-    bbox_sub_ = nh_.subscribe ( bbox_topic_, 30, &RoughLocalizer::bbox_cb, this );
-    std::string bbox_in_name = nh_.resolveName ( bbox_topic_ );
+    std::string bbox_in_name = "/object_localizer/bbox_list";
+    bbox_sub_ = nh_.subscribe ( bbox_in_name, 30, &RoughLocalizer::bbox_cb, this );
     ROS_INFO_STREAM ( "Listening for bounding box list on topic: " << bbox_in_name );
 
     std::string bbox_out_name = "/rough_localizer/bbox_list";
@@ -274,26 +299,25 @@ public:
   ~RoughLocalizer () { }
 
 private:
-
   ros::NodeHandle nh_;
   tf::TransformListener tf_listener;
   pcl::PointCloud<pcl::PointXYZ>::Ptr saved_cloud;
-  std::string cloud_topic_;
+  bool is_publish_;
+  ros::ServiceServer start_rough_localizer_, stop_rough_localizer_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
-  std::string bbox_topic_;
   ros::Subscriber bbox_sub_;
   ros::Publisher bbox_pub_;
   ros::Time sample_time;
   std::vector<box_t_b> box_t_b_list;
-
 };
 
 int main( int argc, char** argv )
 {
   ros::init ( argc, argv, "rough_localizer" );
-  // ros::NodeHandle n;
+  ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
   RoughLocalizer RL;
-  ros::spin ();
+  ros::shutdown ();
   return 0;
 }

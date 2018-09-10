@@ -82,12 +82,12 @@ int main ( int argc, char** argv )
   ros::init ( argc, argv, "move_camera" );
   ros::NodeHandle nh_;
   ros::AsyncSpinner spinner ( 4 );
-  spinner.start ( );
+  spinner.start ();
   ros::ServiceServer start_move_camera_, stop_move_camera_;
   start_move_camera_ = nh_.advertiseService ( "start_move_camera", &start_move_camera );
   stop_move_camera_ = nh_.advertiseService ( "stop_move_camera", &stop_move_camera );
   is_move = false;
   move_camera ();
-  ros::shutdown();
+  ros::shutdown ();
   return 0;
 }
