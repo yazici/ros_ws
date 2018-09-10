@@ -46,8 +46,8 @@ public:
     move_group.reset ( new moveit::planning_interface::MoveGroupInterface ( PLANNING_GROUP ) );
     planning_scene_interface.reset ( new moveit::planning_interface::PlanningSceneInterface () );
     joint_model_group = move_group->getCurrentState()->getJointModelGroup ( PLANNING_GROUP );
-    ROS_INFO_NAMED ( "move_camera", "Reference frame: %s", move_group->getPlanningFrame().c_str() );
-    ROS_INFO_NAMED ( "move_camera", "End effector link: %s", move_group->getEndEffectorLink().c_str() );
+    ROS_INFO_NAMED ( "control_node", "Reference frame: %s", move_group->getPlanningFrame().c_str() );
+    ROS_INFO_NAMED ( "control_node", "End effector link: %s", move_group->getEndEffectorLink().c_str() );
   }
 
   ~ControlNode ()

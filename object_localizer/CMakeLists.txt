@@ -17,6 +17,7 @@ find_package( catkin REQUIRED COMPONENTS
   tf2_ros
   image_transport
   object_localizer_msg
+  std_srvs
 )
 
 catkin_package(

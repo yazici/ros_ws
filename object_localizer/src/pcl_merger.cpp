@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
@@ -21,12 +22,12 @@
 
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
+std::string reference_frame = "world";
 std::string camera_frame = "camera_depth_optical_frame";
 ros::Time sample_time;
 
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 {
-	// std::printf( "Downsampling point clouds...\n" );
   static pcl::VoxelGrid<pcl::PointXYZRGB> grid;
   grid.setInputCloud ( cloud );
   grid.setLeafSize ( 0.005f, 0.005f, 0.005f );
@@ -46,8 +47,7 @@ public:
 		{
 			try
 			{
-				// ros::Time(0) or sample_time
-		    listener.lookupTransform( "world", camera_frame, sample_time, transform );
+		    listener.lookupTransform( reference_frame, camera_frame, sample_time, transform );
 				is_lookuped = true;
 		  }
 		  catch ( tf::TransformException ex )
@@ -83,8 +83,8 @@ public:
 
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
-    // if input cloud is empty or is not dense, publish the old point cloud and return
-    if ( ( cloud->width * cloud->height ) == 0 && ! cloud->is_dense )
+    // if don't merge or input cloud is not dense or is empty, publish the old point cloud and return
+    if ( !is_merge_ || !cloud->is_dense || ( cloud->width * cloud->height ) == 0 )
 		{
 			pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
 	    cloud_pub_.publish ( scene_cloud_total );
@@ -109,7 +109,7 @@ public:
 
 		// merging the old point cloud with the input one
 		*scene_cloud_total += *scene_cloud_world;
-		scene_cloud_total->header.frame_id = "world";
+		scene_cloud_total->header.frame_id = reference_frame;
     scene_cloud_total->width = scene_cloud_total->size() + scene_cloud_world->size();
 		scene_cloud_total->height = 1;
 		std::cout << "Merged point cloud has [" << scene_cloud_total->size() << "] data points" << std::endl;
@@ -121,15 +121,32 @@ public:
     cloud_pub_.publish ( scene_cloud_total );
   }
 
-  PointCloudMerger () : scene_cloud_ ( new pcl::PointCloud< PointT > ), scene_cloud_total ( new pcl::PointCloud< PointT > ) , cloud_topic_ ( "/camera/depth_registered/points" )
+  bool start_pcl_merge ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    cloud_sub_ = nh_.subscribe ( cloud_topic_, 200, &PointCloudMerger::cloud_cb, this );
-    std::string r_ct = nh_.resolveName ( cloud_topic_ );
-    ROS_INFO_STREAM ( "Listening point cloud message on topic " << r_ct );
+    is_merge_ = true;
+    return true;
+  }
 
-    std::string p_ct = "/point_cloud_merger/points";
-    cloud_pub_ = nh_.advertise < PointCloudT > ( p_ct, 30 );
-    ROS_INFO_STREAM ( "Publishing point cloud message on topic " << p_ct );
+  bool end_pcl_merge ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  {
+    is_merge_ = false;
+    return true;
+  }
+
+  PointCloudMerger () : scene_cloud_ ( new pcl::PointCloud< PointT > ), scene_cloud_total ( new pcl::PointCloud< PointT > )
+  {
+    is_merge_ = false;
+    start_pcl_merge_ = nh_.advertiseService ( "start_pcl_merge", &PointCloudMerger::start_pcl_merge, this );
+    end_pcl_merge_ = nh_.advertiseService ( "stop_pcl_merge", &PointCloudMerger::end_pcl_merge, this );
+    ros::Duration ( 1 ).sleep ();
+
+    std::string cloud_topic_in_ = "/camera/depth_registered/points";
+    cloud_sub_ = nh_.subscribe ( cloud_topic_in_, 200, &PointCloudMerger::cloud_cb, this );
+    ROS_INFO_STREAM ( "Listening point cloud message on topic " << cloud_topic_in_ );
+
+    std::string cloud_topic_out_ = "/point_cloud_merger/points";
+    cloud_pub_ = nh_.advertise < PointCloudT > ( cloud_topic_in_, 30 );
+    ROS_INFO_STREAM ( "Publishing point cloud message on topic " << cloud_topic_in_ );
   }
 
   ~PointCloudMerger () { }
@@ -139,7 +156,8 @@ private:
 	tf::TransformListener listener;
   pcl::PointCloud<PointT>::Ptr scene_cloud_;
 	pcl::PointCloud<PointT>::Ptr scene_cloud_total;
-  std::string cloud_topic_;
+  bool is_merge_;
+  ros::ServiceServer start_pcl_merge_, end_pcl_merge_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
 };
@@ -147,10 +165,9 @@ private:
 int main ( int argc, char** argv )
 {
 	ros::init ( argc, argv, "pcl_merger" );
-	PointCloudMerger pcm;
-	// Use 4 threads
 	ros::AsyncSpinner spinner(4);
   spinner.start();
+  PointCloudMerger pcm;
   ros::waitForShutdown();
   return 0;
 }
