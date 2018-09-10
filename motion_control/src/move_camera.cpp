@@ -13,6 +13,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 bool is_move = false;
+ros::ServiceClient end_generate_scan_plan_;
 
 void move_camera ()
 {
@@ -35,14 +36,14 @@ void move_camera ()
       // if the start robot pose is pose 2
       if ( std::abs ( joint_group_positions[3] + 1.2994 ) <= 0.01 )
       {
-        int move_counter = 0;
-        while ( move_counter != 2 )
+        int motion_stage_idx = 0;
+        while ( motion_stage_idx != 2 )
         {
-          if ( move_counter  == 0 )
+          if ( motion_stage_idx  == 0 )
           {
             // set pose 3 in radians
             joint_group_positions[3] = -0.069;
-          } else if ( move_counter  == 1 )
+          } else if ( motion_stage_idx  == 1 )
           {
             // set pose 2 in radians
             joint_group_positions[3] = -1.2994;
@@ -57,7 +58,14 @@ void move_camera ()
             move_group.setMaxAccelerationScalingFactor ( 0.01 );
             move_group.move ();
           }
-          move_counter ++;
+          // call the end_generate_scan_plan service from node control_node
+          if ( motion_stage_idx == 2 )
+          {
+            std_srvs::Empty msg;
+            end_generate_scan_plan_.call ( msg );
+            is_move = false;
+          }
+          motion_stage_idx ++;
         }
       }
     }
@@ -86,6 +94,7 @@ int main ( int argc, char** argv )
   ros::ServiceServer start_move_camera_, stop_move_camera_;
   start_move_camera_ = nh_.advertiseService ( "start_move_camera", &start_move_camera );
   stop_move_camera_ = nh_.advertiseService ( "stop_move_camera", &stop_move_camera );
+  end_generate_scan_plan_ = nh_.serviceClient < std_srvs::Empty > ( "end_generate_scan_plan" );
   is_move = false;
   move_camera ();
   ros::shutdown ();

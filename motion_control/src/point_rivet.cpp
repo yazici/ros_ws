@@ -4,6 +4,7 @@
 #include <string>
 
 #include <ros/package.h>
+#include <std_srvs/Empty.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf/transform_listener.h>
 
@@ -55,15 +56,10 @@ void CfgFileReader ( std::queue< Target >& target_queue )
   input.close();
 }
 
-int main(int argc, char** argv)
+void do_point_rivet ()
 {
-  ros::init(argc, argv, "do_scan");
-  ros::NodeHandle node_handle;
   std::queue< Target > target_queue;
   CfgFileReader ( target_queue );
-  ros::AsyncSpinner spinner(4);
-  spinner.start();
-
   // create interface for motion planning
   static const std::string PLANNING_GROUP = "rivet_tool";
   moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
@@ -150,7 +146,22 @@ int main(int argc, char** argv)
     }
 
   }
+}
 
+bool start_point_rivet ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+{
+  do_point_rivet ();
+  return true;
+}
+
+int main ( int argc, char** argv )
+{
+  ros::init ( argc, argv, "point_rivet" );
+  ros::NodeHandle nh_;
+  ros::AsyncSpinner spinner(4);
+  spinner.start();
+  ros::ServiceServer start_point_rivet_;
+  start_point_rivet_ = nh_.advertiseService ( "start_point_rivet", &start_point_rivet );
   ros::shutdown();
   return 0;
 }
