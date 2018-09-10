@@ -158,10 +158,10 @@ int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "point_rivet" );
   ros::NodeHandle nh_;
-  ros::AsyncSpinner spinner(4);
+  ros::AsyncSpinner spinner ( 4 );
   spinner.start();
   ros::ServiceServer start_point_rivet_;
   start_point_rivet_ = nh_.advertiseService ( "start_point_rivet", &start_point_rivet );
-  ros::shutdown();
+  ros::waitForShutdown ();
   return 0;
 }
