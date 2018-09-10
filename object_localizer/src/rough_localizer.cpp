@@ -38,7 +38,7 @@ typedef bg::model::box<point_t_b> box_t_b;
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
-std::string reference_frame = "table_top";
+std::string reference_frame = "world";
 std::string camera_frame = "camera_depth_optical_frame";
 
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
@@ -272,10 +272,8 @@ public:
   RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZ > )
   {
     is_publish_ = false;
-
     start_rough_localizer_ = nh_.advertiseService ( "start_rough_localizer", &RoughLocalizer::start_rough_localizer, this );
     stop_rough_localizer_ = nh_.advertiseService ( "stop_rough_localizer", &RoughLocalizer::stop_rough_localizer, this );
-
     ros::Duration ( 1 ) .sleep ();
 
     std::string cloud_in_name = "/camera/depth_registered/points";
@@ -312,7 +310,7 @@ private:
   std::vector<box_t_b> box_t_b_list;
 };
 
-int main( int argc, char** argv )
+int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "rough_localizer" );
   ros::AsyncSpinner spinner ( 4 );
