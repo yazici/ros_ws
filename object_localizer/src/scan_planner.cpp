@@ -270,9 +270,9 @@ public:
     stop_scan_planner_ = nh_.advertiseService ( "stop_scan_planner", &ScanPlanner::stop_scan_planner, this );
     ros::Duration ( 1 ) .sleep ();
 
-    std::string segment_in_name = "/box_segmenter/segment_list";
-    segment_list_sub_ = nh_.subscribe ( segment_in_name, 10, &ScanPlanner::segment_list_cb, this );
-    ROS_INFO_STREAM ( "Listening for segment list on topic: " << segment_in_name );
+    std::string segment_list_in_name = "/box_segmenter/segment_list";
+    segment_list_sub_ = nh_.subscribe ( segment_list_in_name, 10, &ScanPlanner::segment_list_cb, this );
+    ROS_INFO_STREAM ( "Listening for segment list on topic: " << segment_list_in_name );
 
     start_profile_scan_ = nh_.serviceClient < std_srvs::Empty > ( "start_profile_scan" );
   }
@@ -293,6 +293,6 @@ int main ( int argc, char** argv )
   ros::AsyncSpinner spinner ( 4 );
   spinner.start ();
   ScanPlanner SP;
-  ros::waitForShutdown();
+  ros::waitForShutdown ();
   return 0;
 }

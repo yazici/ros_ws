@@ -266,6 +266,8 @@ public:
   bool stop_rough_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     is_publish_ = false;
+    // clear up old bounding boxes
+    box_t_b_list.clear ();
     return true;
   }
 

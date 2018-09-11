@@ -42,34 +42,34 @@ void move_camera ()
           if ( motion_stage_idx  == 0 )
           {
             // set pose 3 in radians
-            joint_group_positions[3] = -0.069;
+            joint_group_positions [ 3 ] = -0.069;
           } else if ( motion_stage_idx  == 1 )
           {
             // set pose 2 in radians
-            joint_group_positions[3] = -1.2994;
+            joint_group_positions [ 3 ] = -1.2994;
           }
           move_group.setJointValueTarget ( joint_group_positions );
           moveit::planning_interface::MoveGroupInterface::Plan my_plan;
           bool success = ( move_group.plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
           if ( success )
           {
-            std::cout << "move to: " << joint_group_positions[3] << std::endl;
+            std::cout << "move to: " << joint_group_positions [ 3 ] << std::endl;
             move_group.setMaxVelocityScalingFactor ( 0.01 );
             move_group.setMaxAccelerationScalingFactor ( 0.01 );
             move_group.move ();
           }
-          // call the end_generate_scan_plan service from node control_node
-          if ( motion_stage_idx == 2 )
-          {
-            std_srvs::Empty msg;
-            end_generate_scan_plan_.call ( msg );
-            is_move = false;
-          }
           motion_stage_idx ++;
+        }
+        // call the end_generate_scan_plan service from node control_node
+        if ( motion_stage_idx == 2 )
+        {
+          std_srvs::Empty msg;
+          end_generate_scan_plan_.call ( msg );
+          is_move = false;
         }
       }
     }
-    rate.sleep();
+    rate.sleep ();
   }
 }
 
@@ -97,6 +97,6 @@ int main ( int argc, char** argv )
   end_generate_scan_plan_ = nh_.serviceClient < std_srvs::Empty > ( "end_generate_scan_plan" );
   is_move = false;
   move_camera ();
-  ros::shutdown ();
+  ros::waitForShutdown ();
   return 0;
 }

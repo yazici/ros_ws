@@ -74,31 +74,38 @@ public:
   ~ControlNode ()
   {}
 
+  bool set_pose2 ()
+  {
+    std::map < std::string, double > value_map = move_group->getNamedTargetValues ( "pose2" );
+    // std::cout << move_group->getNamedTargetValues ( "pose2" ) << std::endl;
+    // for ( const auto& value_pair : value_map )
+    // {
+    //   std::cout << "<" << value_pair.first << "> = <" << value_pair.second << ">\n";
+    // }
+    move_group->setJointValueTarget ( value_map );
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool success = ( move_group->plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
+    if ( success )
+    {
+      std::cout << "reset the robot pose to pose 2" << std::endl;
+      move_group->setMaxVelocityScalingFactor ( 0.1 );
+      move_group->setMaxAccelerationScalingFactor ( 0.1 );
+      move_group->move ();
+    }
+    return success;
+  }
+
   void generate_scan_plan ()
   {
     // step 1, add aircraft_frame to the planning scene.
     std_srvs::Empty msg;
     if ( add_aircraft_frame_.call ( msg ) )
     {
-      std::cout << "aircraft frame has been added" << std::endl;
+      std::cout << "Aircraft frame has been added" << std::endl;
 
       // step 2, set the robot pose to pose 2.
-      std::map < std::string, double > value_map = move_group->getNamedTargetValues ( "pose2" );
-      // std::cout << move_group->getNamedTargetValues ( "pose2" ) << std::endl;
-      // for ( const auto& value_pair : value_map )
-      // {
-      //   std::cout << "<" << value_pair.first << "> = <" << value_pair.second << ">\n";
-      // }
-      move_group->setJointValueTarget ( value_map );
-      moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-      bool success = ( move_group->plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
-      if ( success )
+      if ( set_pose2 () )
       {
-        std::cout << "reset the robot pose to pose 2" << std::endl;
-        move_group->setMaxVelocityScalingFactor ( 0.1 );
-        move_group->setMaxAccelerationScalingFactor ( 0.1 );
-        move_group->move ();
-
         // step 3, start service pcl_merger, rough_localizer, box_segmenter, and scan_planner
         if ( start_pcl_merger_.call ( msg ) && start_rough_localizer_.call ( msg )
              && start_box_segmenter_.call ( msg ) )
@@ -136,7 +143,7 @@ public:
     // call service rivet_localizer
     start_rivet_localizer_.call ( msg );
     // call service point_rivet
-    start_point_rivet_.call ( msg ); 
+    start_point_rivet_.call ( msg );
     return true;
   }
 
