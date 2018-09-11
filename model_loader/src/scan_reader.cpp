@@ -153,7 +153,7 @@ void get_the_central_point()
     old_y_t = y_t;
     old_theta2 = theta2;
   }
-  publish_tf ( old_x_t, -old_y_t, old_theta2 );
+  publish_tf ( old_x_t, old_y_t, old_theta2 );
 }
 
 laser_geometry::LaserProjection projector_;
@@ -165,7 +165,7 @@ void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
   if ( is_fix_table_position )
   {
     std::cout << "publish old [x, y, theta] " << std::endl;
-    publish_tf ( old_x_t, -old_y_t, old_theta2 );
+    publish_tf ( old_x_t, old_y_t, old_theta2 );
     return;
   }
 

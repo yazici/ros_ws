@@ -1,12 +1,12 @@
 <launch>
 
+  <!-- start the neural network node
+  <node name="object_detector" pkg="object_localizer" type="object_detector.py" respawn="true" output="screen">
+  </node>
+  -->
+
   <!-- start the node "add_and_remove_aircraft_frame" which provides the services "add_aircraft_frame" and "remove_aircraft_frame" -->
   <node name="add_and_remove_aircraft_frame" pkg="model_loader" type="add_and_remove_aircraft_frame" respawn="true" output="screen">
-  </node>
-
-  <!-- start the neural network node -->
-  <node name="object_detector" pkg="object_localizer" type="object_detector.py" respawn="true" output="screen">
-    <!-- <param name="frame_id" value="base_link" /> -->
   </node>
 
   <!-- start the node "pcl_merger" which provides the services "start_pcl_merge" and "stop_pcl_merge" -->
@@ -44,9 +44,10 @@
   <!-- start the node "rivet_localizer" which provides the service "start_rivet_localizer" -->
   <node name="rivet_localizer" pkg="object_localizer" type="rivet_localizer" respawn="true" output="screen">
   </node>
-
-  <!-- start the node "point_rivet" which provides the service "start_point_rivet" -->
+  
+  <!-- start the node "point_rivet" which provides the service "start_point_rivet"
   <node name="point_rivet" pkg="motion_control" type="point_rivet" respawn="true" output="screen">
   </node>
+  -->
 
 </launch>

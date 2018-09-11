@@ -36,8 +36,8 @@ std::string reference_frame = "world";
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
-float scan_offset = 0.10;
-float scan_distance = 0.10;
+float scan_offset = 0.08;
+float scan_distance = 0.08;
 
 void show_segment_cloud ( PointCloudT::ConstPtr cloud )
 {
@@ -194,9 +194,24 @@ class ScanPlanner
 {
 public:
 
-  void segment_list_cb ( const object_localizer_msg::Segment_list::ConstPtr& segment_list )
+  void segment_list_cb ( const object_localizer_msg::Segment_list::ConstPtr& segment_list_in )
   {
-    if ( is_publish_ && segment_list->BBox_list_float.size() > 0 )
+    if ( segment_list_in->BBox_list_float.size() > 0 )
+    {
+      segment_list.reset ( new object_localizer_msg::Segment_list () );
+      int bbox_idx = 0;
+      for ( object_localizer_msg::BBox_float bbox : segment_list_in->BBox_list_float )
+      {
+        segment_list->BBox_list_float.push_back ( bbox );
+        segment_list->Segment_list.push_back ( segment_list_in->Segment_list [ bbox_idx ] );
+        bbox_idx ++;
+      }
+    }
+  }
+
+  bool start_scan_planner ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
+  {
+    if ( segment_list->BBox_list_float.size() > 0 )
     {
       ofstream do_scan_fs;
       std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan.cfg";
@@ -245,30 +260,14 @@ public:
         bbox_idx ++;
       }
     	do_scan_fs.close();
-      is_publish_ = false;
-      std_srvs::Empty msg;
-      start_profile_scan_. call ( msg );
     }
-  }
-
-  bool start_scan_planner ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
-  {
-    is_publish_ = true;
-    return true;
-  }
-
-  bool stop_scan_planner ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
-  {
-    is_publish_ = false;
     return true;
   }
 
   ScanPlanner ()
   {
-    is_publish_ = false;
     start_scan_planner_ = nh_.advertiseService ( "start_scan_planner", &ScanPlanner::start_scan_planner, this );
-    stop_scan_planner_ = nh_.advertiseService ( "stop_scan_planner", &ScanPlanner::stop_scan_planner, this );
-    ros::Duration ( 1 ) .sleep ();
+    ros::Duration ( 0.5 ) .sleep ();
 
     std::string segment_list_in_name = "/box_segmenter/segment_list";
     segment_list_sub_ = nh_.subscribe ( segment_list_in_name, 10, &ScanPlanner::segment_list_cb, this );
@@ -281,8 +280,8 @@ public:
 
 private:
   ros::NodeHandle nh_;
-  bool is_publish_;
-  ros::ServiceServer start_scan_planner_, stop_scan_planner_;
+  object_localizer_msg::Segment_list::Ptr segment_list;
+  ros::ServiceServer start_scan_planner_;
   ros::Subscriber segment_list_sub_;
   ros::ServiceClient start_profile_scan_;
 };

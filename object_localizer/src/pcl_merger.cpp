@@ -23,7 +23,7 @@
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 std::string reference_frame = "world";
-std::string camera_frame = "camera_depth_optical_frame";
+std::string camera_frame = "camera_color_optical_frame";
 ros::Time sample_time;
 
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
@@ -84,8 +84,10 @@ public:
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
     // if don't merge or input cloud is not dense or is empty, publish the old point cloud and return
-    if ( !is_merge_ || !cloud->is_dense || ( cloud->width * cloud->height ) == 0 )
+    // !cloud->is_dense the is dense doesn't work any more.
+    if ( !is_merge_ || ( cloud->width * cloud->height ) == 0 )
 		{
+      scene_cloud_total->header.frame_id = reference_frame;
 			pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
 	    cloud_pub_.publish ( scene_cloud_total );
 			return;
@@ -147,8 +149,8 @@ public:
     ROS_INFO_STREAM ( "Listening point cloud message on topic " << cloud_topic_in_ );
 
     std::string cloud_topic_out_ = "/point_cloud_merger/points";
-    cloud_pub_ = nh_.advertise < PointCloudT > ( cloud_topic_in_, 30 );
-    ROS_INFO_STREAM ( "Publishing point cloud message on topic " << cloud_topic_in_ );
+    cloud_pub_ = nh_.advertise < PointCloudT > ( cloud_topic_out_, 30 );
+    ROS_INFO_STREAM ( "Publishing point cloud message on topic " << cloud_topic_out_ );
   }
 
   ~PointCloudMerger () { }

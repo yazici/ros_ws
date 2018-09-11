@@ -35,7 +35,7 @@ public:
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
     // if input cloud is empty or is not dense, publish the old point cloud and return
-    if ( ( cloud->width * cloud->height ) == 0 && ! cloud->is_dense )
+    if ( ( cloud->width * cloud->height ) == 0 ) // && ! cloud->is_dense
 		{
 			return;
 		}

@@ -17,7 +17,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
-ros::ServiceClient start_profile_merger_, stop_profile_merger_, stop_profile_scan_;
+ros::ServiceClient start_profile_merger_, start_point_cloud_writer_, stop_profile_merger_, stop_profile_scan_;
 
 void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, float y_e, float z_e )
 {
@@ -99,6 +99,8 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
       start_profile_merger_.call ( msg );
       move_group.execute ( my_plan );
       stop_profile_merger_.call ( msg );
+      std::cout << "write merged profile scan" << std::endl;
+      start_point_cloud_writer_.call ( msg );
       stop_profile_scan_.call ( msg );
     }
   }
@@ -163,6 +165,7 @@ int main ( int argc, char** argv )
   ros::ServiceServer start_do_scan_;
   start_do_scan_ = nh_.advertiseService ( "start_do_scan", &start_do_scan );
   start_profile_merger_ = nh_.serviceClient < std_srvs::Empty > ( "start_profile_merger" );
+  start_point_cloud_writer_ = nh_.serviceClient < std_srvs::Empty > ( "start_point_cloud_writer" );
   stop_profile_merger_ = nh_.serviceClient < std_srvs::Empty > ( "stop_profile_merger" );
   stop_profile_scan_ = nh_.serviceClient < std_srvs::Empty > ( "stop_profile_scan" );
   ros::waitForShutdown ();
