@@ -27,6 +27,7 @@ class ControlNode {
 
   ros::NodeHandle nh_;
   tf2_ros::StaticTransformBroadcaster br;
+  ros::ServiceClient start_fix_table_position_, stop_fix_table_position_;
   ros::ServiceClient add_aircraft_frame_, remove_aircraft_frame_, start_pcl_merger_, stop_pcl_merger_,
                      start_rough_localizer_, stop_rough_localizer_, start_box_segmenter_, stop_box_segmenter_,
                      start_scan_planner_, stop_scan_planner_, start_move_camera_, stop_move_camera_;
@@ -44,6 +45,9 @@ public:
     //  add_aircraft_frame and remove_aircraft_frame
     add_aircraft_frame_ = nh_.serviceClient < std_srvs::Empty > ( "add_aircraft_frame" );
     remove_aircraft_frame_ = nh_.serviceClient < std_srvs::Empty > ( "remove_aircraft_frame" );
+    // start_fix_table_position and stop_fix_table_position
+    start_fix_table_position_ = nh_.serviceClient < std_srvs::Empty > ( "start_fix_table_position" );
+    stop_fix_table_position_ = nh_.serviceClient < std_srvs::Empty > ( "stop_fix_table_position" );
     // pcl_merger, rough_localizer, box_segmenter, scan_planner and move_camera
     start_pcl_merger_ = nh_.serviceClient < std_srvs::Empty > ( "start_pcl_merger" );
     stop_pcl_merger_ = nh_.serviceClient < std_srvs::Empty > ( "stop_pcl_merger" );
@@ -99,7 +103,7 @@ public:
   {
     // step 1, add aircraft_frame to the planning scene.
     std_srvs::Empty msg;
-    if ( add_aircraft_frame_.call ( msg ) )
+    if ( start_fix_table_position_.call ( msg ) && add_aircraft_frame_.call ( msg ) )
     {
       std::cout << "Aircraft frame has been added" << std::endl;
 
@@ -139,11 +143,20 @@ public:
   bool stop_profile_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     std_srvs::Empty msg;
+    // save a profile point cloud
     start_point_cloud_writer_.call ( msg );
-    // call service rivet_localizer
-    start_rivet_localizer_.call ( msg );
-    // call service point_rivet
-    start_point_rivet_.call ( msg );
+    // move back to pose 2
+    if ( set_pose2 () )
+    {
+      // remove the the aircraft frame
+      remove_aircraft_frame_.call ( msg );
+      // call service rivet_localizer
+      start_rivet_localizer_.call ( msg );
+      // call service point_rivet
+      start_point_rivet_.call ( msg );
+      // stop fix table position
+      stop_fix_table_position_.call ( msg );
+    }
     return true;
   }
 

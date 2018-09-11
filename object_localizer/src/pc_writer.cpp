@@ -46,13 +46,12 @@ public:
     pcl_conversions::toPCL( *cloud, pcl_pc2 );
     pcl::fromPCLPointCloud2 ( pcl_pc2, *scene_cloud_ );
 		sample_time = cloud->header.stamp;
-
   }
 
   bool start_point_cloud_writer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
-    std::cout << "[" << sample_time << "] Profile point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
-    std::string pc_file_path = ros::package::getPath ( "object_localizer" )+ "/pc/pc_out_" + std::to_string ( pc_counter ) + ".ply";
+    std::cout << "[" << sample_time << "] Profile point cloud has [" << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
+    std::string pc_file_path = ros::package::getPath ( "object_localizer" )+ "/data/pc_out_" + std::to_string ( pc_counter ) + ".ply";
 		std::cout << "Saving point cloud to file: \n\t" << pc_file_path << std::endl;
 		writer.write ( pc_file_path, *scene_cloud_ );
     return true;
@@ -90,7 +89,7 @@ void CfgFileReader ()
     std::istringstream iss ( line );
     std::string cmd;
     iss >> pc_counter;
-    std::cout << "***pc_counter = [" << pc_counter << "]" << std::endl;
+    std::cout << "**[pc_writer]** pc_counter = [" << pc_counter << "]" << std::endl;
   }
   input.close();
 }

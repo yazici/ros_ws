@@ -32,6 +32,7 @@
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
+std::string reference_frame = "world";
 std::string SceneFileName;
 int filter_mean_k = 40;
 float filter_stddev = 1.0;
@@ -216,7 +217,7 @@ void scale_and_color_point_cloud ( PointCloudT::Ptr cloud_in, PointCloudT::Ptr c
   }
   cloud_out->width = cloud_out_counter;
   cloud_out->height = 1;
-  cloud_out->header.frame_id = "world";
+  cloud_out->header.frame_id = reference_frame;
 }
 
 void getMinMax3D (const pcl::PointCloud<PointT> &cloud, PointT &min_pt, PointT &max_pt)
@@ -266,7 +267,7 @@ void show_frame ( std::string frame_name, double x, double y, double z, double r
 	geometry_msgs::TransformStamped transformStamped;
 	// create a frame for each object
   transformStamped.header.stamp = ros::Time::now();
-  transformStamped.header.frame_id = "world";
+  transformStamped.header.frame_id = reference_frame;
   transformStamped.child_frame_id = frame_name;
   transformStamped.transform.translation.x = x;
   transformStamped.transform.translation.y = y;
@@ -355,7 +356,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
   }
   planar_cloud->width = planar_cloud_counter;
   planar_cloud->height = 1;
-  planar_cloud->header.frame_id = "world";
+  planar_cloud->header.frame_id = reference_frame;
 	// do transformation to show the point cloud
 	PointCloudT::Ptr cloud_transformed	( new PointCloudT );
 	Eigen::Matrix4f transform_2 ( Eigen::Matrix4f::Identity() );
@@ -412,7 +413,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	}
 	cloud_rivet->width = cloud_rivet_counter;
   cloud_rivet->height = 1;
-  cloud_rivet->header.frame_id = "world";
+  cloud_rivet->header.frame_id = reference_frame;
 	std::cout << "***cloud_rivet has " << cloud_rivet_counter << " data points" << std::endl;
 	// std::cout << "***average x = " << sum_x / cloud_rivet_counter << std::endl;
 
@@ -549,7 +550,6 @@ public:
   RivetLocalizer () : scene_cloud_ ( new pcl::PointCloud< PointT > )
 	{
 		start_rivet_localizer_ = nh_.advertiseService ( "start_rivet_localizer", &RivetLocalizer::start_rivet_localizer, this );
-		// ros::Duration ( 1 ).sleep ();
 	}
 
   ~RivetLocalizer () { }
@@ -562,9 +562,7 @@ private:
 
 void CfgFileReader ()
 {
-  std::string pack_path = ros::package::getPath ( "object_localizer" );
-  std::cout << "***The path for package [object_localizer] is: [" << pack_path << "]" << std::endl;
-  std::string cfgFileName = pack_path + "/config/rivet_localizer.cfg";
+  std::string cfgFileName = ros::package::getPath ( "object_localizer" ) + "/config/rivet_localizer.cfg";
   std::cout << "***The path of the rivet_localizer configuration file is: [" << cfgFileName << "]" << std::endl;
 
   std::ifstream input ( cfgFileName );
@@ -573,7 +571,7 @@ void CfgFileReader ()
   {
     std::istringstream iss ( line );
     iss >> SceneFileName;
-    std::cout << "***SceneFileName = [" << SceneFileName << "]" << std::endl;
+    std::cout << "***Profile file name = [" << SceneFileName << "]" << std::endl;
   }
 	if ( std::getline ( input, line ) )
   {

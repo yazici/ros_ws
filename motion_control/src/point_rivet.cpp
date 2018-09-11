@@ -62,16 +62,15 @@ void do_point_rivet ()
   CfgFileReader ( target_queue );
   // create interface for motion planning
   static const std::string PLANNING_GROUP = "rivet_tool";
-  moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
+  moveit::planning_interface::MoveGroupInterface move_group ( PLANNING_GROUP );
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-  // const robot_state::JointModelGroup* joint_model_group = move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
-  ROS_INFO_NAMED("point_rivet", "Reference frame: %s", move_group.getPlanningFrame().c_str());
-  ROS_INFO_NAMED("point_rivet", "End effector link: %s", move_group.getEndEffectorLink().c_str());
+  ROS_INFO_NAMED( "point_rivet", "Reference frame: %s", move_group.getPlanningFrame ().c_str () );
+  ROS_INFO_NAMED( "point_rivet", "End effector link: %s", move_group.getEndEffectorLink ().c_str () );
 
   if ( !target_queue.empty () )
   {
-    Target target = target_queue.front();
-    target_queue.pop();
+    Target target = target_queue.front ();
+    target_queue.pop ();
     geometry_msgs::Pose target_pose1;
   	target_pose1.position.x = target.x;
     target_pose1.position.y = target.y;
@@ -84,13 +83,13 @@ void do_point_rivet ()
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     ROS_INFO_STREAM ( "Start for planning" );
     bool success = ( move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
-    ROS_INFO_NAMED( "point_rivet", "planning for goal pose is %s", success ? "success" : "FAILED" );
+    ROS_INFO_NAMED ( "point_rivet", "planning for goal pose is %s", success ? "success" : "FAILED" );
 
     if ( success )
     {
       move_group.setMaxVelocityScalingFactor ( 0.02 );
       move_group.setMaxAccelerationScalingFactor ( 0.02 );
-      move_group.move();
+      move_group.move ();
       ros::Duration ( 1.0 ) .sleep ();
 
       // start scanning the part

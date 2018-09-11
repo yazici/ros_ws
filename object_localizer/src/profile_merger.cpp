@@ -23,7 +23,7 @@
 
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
-std::string reference_frame = "table_top";
+std::string reference_frame = "world";
 std::string scanner_frame = "scanCONTROL_2900-50_scanner_laser_link";
 ros::Time sample_time;
 
@@ -59,7 +59,7 @@ public:
 			try
 			{
 				// ros::Time(0) or sample_time
-		    listener.lookupTransform( reference_frame, scanner_frame, sample_time, transform );
+		    listener.lookupTransform ( reference_frame, scanner_frame, sample_time, transform );
 				is_lookuped = true;
 		  }
 		  catch ( tf::TransformException ex )
@@ -109,7 +109,7 @@ public:
     pcl_conversions::toPCL( *cloud, pcl_pc2 );
     pcl::fromPCLPointCloud2 ( pcl_pc2, *scene_cloud_ );
 		sample_time = cloud->header.stamp;
-		std::cout << "[" << sample_time << "] Input point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
+		std::cout << "[" << sample_time << "] Input point cloud has [" << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
 
 		// downsampling and transforming the input point cloud
 		// filterOutliner ( scene_cloud_ );
@@ -117,7 +117,7 @@ public:
 		downSampling ( scene_cloud_, scene_cloud_sampled );
 		PointCloudT::Ptr scene_cloud_world	( new PointCloudT );
 		transform_point_cloud ( scene_cloud_sampled, scene_cloud_world );
-		std::cout << "Input point cloud after downSampling has [" << scene_cloud_world->size() << "] data points" << std::endl;
+		std::cout << "Point cloud after downSampling has [" << scene_cloud_world->size() << "] data points" << std::endl;
 
 		// merging the old point cloud with the input one
 		*scene_cloud_total += *scene_cloud_world;
@@ -142,6 +142,8 @@ public:
 	bool stop_profile_merger ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 	{
 	  is_publish_ = false;
+		// clear up old profile point cloud
+		scene_cloud_total.reset ( new pcl::PointCloud< PointT > );
 	  return true;
 	}
 
