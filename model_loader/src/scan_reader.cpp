@@ -160,11 +160,12 @@ laser_geometry::LaserProjection projector_;
 ros::Publisher pub;
 int K = 10;
 
-void scanCallback( const sensor_msgs::LaserScan::ConstPtr& scan_in )
+void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 {
+  // if the car is fixed, output old table position.
   if ( is_fix_table_position )
   {
-    std::cout << "publish old [x, y, theta] " << std::endl;
+    std::cout << ros::Time::now() << ": publish old [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
     publish_tf ( old_x_t, old_y_t, old_theta2 );
     return;
   }
@@ -330,7 +331,7 @@ int main ( int argc, char **argv )
   stop_fix_table_position_ = nh_.advertiseService ( "stop_fix_table_position", &stop_fix_table_position );
 
   ros::Subscriber sub = nh_.subscribe ( "/r2000_node/scan", 10, scanCallback );
-  pub = nh_.advertise< pcl::PointCloud< pcl::PointXYZ > > ( "/scan_reader/points2", 1000 );
+  pub = nh_.advertise< pcl::PointCloud< pcl::PointXYZ > > ( "/scan_reader/points2", 10 );
   ros::waitForShutdown ();
   return 0;
 }
