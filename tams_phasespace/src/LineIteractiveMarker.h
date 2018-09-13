@@ -130,7 +130,7 @@ std::string InteractiveTrajectoryMarker::addPoint ( geometry_msgs::Pose &pose )
 	new_point.z = pose.position.z;
   if ( point_vector.size() >= 1 )
   {
-    make_line ( 100000 + trajectory_id, frame_id, point_vector.back(), new_point );
+    make_line ( 100000 + trajectory_id * 1000 + point_vector.size(), frame_id, point_vector.back(), new_point );
   }
   point_vector.push_back ( new_point );
   return point_name;

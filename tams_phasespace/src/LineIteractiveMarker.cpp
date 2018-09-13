@@ -16,6 +16,7 @@ int main ( int argc, char** argv )
   geometry_msgs::Pose pose;
   std::cout << "Add new 6DOF point, enter: 0\n"
             << "Add new line, enter: 1\n"
+            << "Add new trajectory, enter: 2\n"
             << "Otherwise, enter: -1\n";
   int input_num;
   std::cin >> input_num;
@@ -47,6 +48,31 @@ int main ( int argc, char** argv )
       point_line_map.insert( std::make_pair ( InteractiveLineMarker::getEndPointName ( line_counter ), line_ptr ) );
       line_counter++;
     }
+  } else if ( input_num == 2 )
+  {
+    {
+      pose.position.x = -1.0;
+    	pose.position.y = 0.0;
+    	pose.position.z = 0.5;
+    	pose.orientation.w = 1.0;
+      trajMarkerPtr traj_ptr ( new InteractiveTrajectoryMarker ( trajectory_counter, "world" ) );
+      std::string point_name = traj_ptr->addPoint ( pose );
+      trajectory_map.insert ( std::make_pair ( "traj_" + std::to_string ( trajectory_counter ), traj_ptr ) );
+      trajectory_map.insert ( std::make_pair ( point_name, traj_ptr ) );
+    }
+    int counter = 1;
+    while ( counter <= 5 )
+    {
+      pose.position.x = -1.0 + 0.4 * counter ;
+    	pose.position.y = 0.0;
+    	pose.position.z = 0.5;
+    	pose.orientation.w = 1.0;
+      trajMarkerPtr traj_ptr = trajectory_map [ "traj_" + std::to_string ( trajectory_counter ) ];
+      std::string point_name = traj_ptr->addPoint( pose );
+      trajectory_map.insert ( std::make_pair ( point_name, traj_ptr ) );
+      counter ++;
+    }
+    trajectory_counter ++;
   }
 
   ros::spin();
