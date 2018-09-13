@@ -40,6 +40,12 @@ class InteractiveTrajectoryMarker
 		int																   trajectory_id;
 		std::string											     frame_id;
     std::vector < geometry_msgs::Point > point_vector;
+    std::vector < long long > line_id_vector;
+    std::vector < std::string > point_name_vector;
+    std::map < std::string, long long > start_point_line_id_map;
+    std::map < std::string, geometry_msgs::Point > start_point_name_end_point_map;
+    std::map < std::string, long long > end_point_line_id_map;
+    std::map < std::string, geometry_msgs::Point > end_point_name_start_point_map;
   private:
     std::string getPointName ();
 };
@@ -55,7 +61,7 @@ std::map < std::string, lineMarkerPtr > point_line_map;
 typedef boost::shared_ptr < InteractiveTrajectoryMarker > trajMarkerPtr;
 std::map < std::string, trajMarkerPtr > trajectory_map;
 
-void make_line ( int line_id, std::string frame_id, geometry_msgs::Point& start_point, geometry_msgs::Point& end_point );
+void make_line ( int line_id, std::string frame_id, geometry_msgs::Point& start_point, geometry_msgs::Point& end_point, bool show_distance );
 void delete_line ( int line_id, std::string frame_id );
 visualization_msgs::Marker get_arrow ( geometry_msgs::Pose &pose, std::string color, visualization_msgs::InteractiveMarker &msg );
 visualization_msgs::InteractiveMarkerControl& makeCoodinateSystemControl ( visualization_msgs::InteractiveMarker &msg );
@@ -90,7 +96,7 @@ void InteractiveLineMarker::setEndPoint( geometry_msgs::Pose &pose )
 	end_point.x = pose.position.x;
 	end_point.y = pose.position.y;
 	end_point.z = pose.position.z;
-	make_line( line_id, frame_id, start_point, end_point );
+	make_line ( line_id, frame_id, start_point, end_point, true );
 }
 
 void InteractiveLineMarker::deleteLine ()
@@ -124,13 +130,21 @@ std::string InteractiveTrajectoryMarker::addPoint ( geometry_msgs::Pose &pose )
 {
   std::string point_name = getPointName ( );
 	make6DOFMarker ( point_name, frame_id, pose );
+  point_name_vector.push_back ( point_name );
   geometry_msgs::Point new_point;
   new_point.x = pose.position.x;
 	new_point.y = pose.position.y;
 	new_point.z = pose.position.z;
   if ( point_vector.size() >= 1 )
   {
-    make_line ( 100000 + trajectory_id * 1000 + point_vector.size(), frame_id, point_vector.back(), new_point );
+    long long line_id = 100000 + trajectory_id * 1000 + point_vector.size();
+    make_line ( line_id, frame_id, point_vector.back(), new_point, false );
+    line_id_vector.push_back ( line_id );
+    std::string start_point_name = "trajectory_" + std::to_string ( trajectory_id ) + "_point_" + std::to_string ( point_vector.size () - 1 );
+    start_point_line_id_map.insert ( std::make_pair ( start_point_name, line_id ) );
+    start_point_name_end_point_map.insert ( std::make_pair ( start_point_name, new_point ) );
+    end_point_line_id_map.insert ( std::make_pair ( point_name, line_id ) );
+    end_point_name_start_point_map.insert ( std::make_pair ( point_name, point_vector.back() ) );
   }
   point_vector.push_back ( new_point );
   return point_name;
@@ -138,6 +152,17 @@ std::string InteractiveTrajectoryMarker::addPoint ( geometry_msgs::Pose &pose )
 
 void InteractiveTrajectoryMarker::deleteTrajectory ()
 {
+  for ( std::string point_name : point_name_vector )
+  {
+    server->erase ( point_name );
+    trajectory_map.erase ( point_name );
+  }
+  for ( long long line_id : line_id_vector )
+  {
+    // std::cout << "line_id = " << line_id << std::endl;
+    delete_line ( line_id, frame_id );
+  }
+  trajectory_map.erase ( "traj_" + std::to_string ( trajectory_id ) );
 }
 
 std::string InteractiveTrajectoryMarker::getPointName ()
@@ -147,7 +172,7 @@ std::string InteractiveTrajectoryMarker::getPointName ()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void make_line ( int line_id, std::string frame_id, geometry_msgs::Point& start_point, geometry_msgs::Point& end_point )
+void make_line ( int line_id, std::string frame_id, geometry_msgs::Point& start_point, geometry_msgs::Point& end_point, bool show_distance )
 {
 	// define the point and line_strip marker
 	visualization_msgs::Marker points, line_strip, text;
@@ -196,7 +221,10 @@ void make_line ( int line_id, std::string frame_id, geometry_msgs::Point& start_
 
 	marker_pub.publish ( points );
 	marker_pub.publish ( line_strip );
-  marker_pub.publish ( text );
+  if ( show_distance )
+  {
+    marker_pub.publish ( text );
+  }
 }
 
 void delete_line ( int line_id, std::string frame_id )
@@ -363,7 +391,7 @@ void processFeedback ( const visualization_msgs::InteractiveMarkerFeedbackConstP
 			if ( feedback->menu_entry_id == 1 )
 			{
 				server->erase ( feedback->marker_name );
-        if ( point_line_map.find ( feedback->marker_name ) != point_line_map.end() )
+        if ( point_line_map.find ( feedback->marker_name ) != point_line_map.end () )
   			{
   				std::string point_name = feedback->marker_name;
   				lineMarkerPtr line_ptr = point_line_map[point_name];
@@ -379,12 +407,13 @@ void processFeedback ( const visualization_msgs::InteractiveMarkerFeedbackConstP
             point_line_map.erase ( line_ptr->start_point_name );
   				}
   				line_ptr->deleteLine ();
-  			}
+  			} else if ( trajectory_map.find ( feedback->marker_name ) != trajectory_map.end () )
+        {
+          std::string point_name = feedback->marker_name;
+          trajMarkerPtr traj_ptr = trajectory_map [ point_name ];
+          traj_ptr->deleteTrajectory ();
+        }
 				// std::cout << "delete button is pressed" << std::endl;
-			} else if ( feedback->menu_entry_id == 2 )
-			{
-				// make6DofMarker( visualization_msgs::InteractiveMarkerControl::MOVE_3D, "6DoF" + std::to_string( marker_counter ) );
-				// marker_counter++;
 			}
       break;
 		}
@@ -413,15 +442,40 @@ void processFeedback ( const visualization_msgs::InteractiveMarkerFeedbackConstP
 					line_ptr->start_point.x = pose.position.x;
 					line_ptr->start_point.y = pose.position.y;
 					line_ptr->start_point.z = pose.position.z;
-					make_line ( line_ptr->line_id, line_ptr->frame_id, line_ptr->start_point, line_ptr->end_point );
+					make_line ( line_ptr->line_id, line_ptr->frame_id, line_ptr->start_point, line_ptr->end_point, true );
 				} else if ( point_name == line_ptr->end_point_name )
 				{
 					line_ptr->end_point.x = pose.position.x;
 					line_ptr->end_point.y = pose.position.y;
 					line_ptr->end_point.z = pose.position.z;
-					make_line ( line_ptr->line_id, line_ptr->frame_id, line_ptr->start_point, line_ptr->end_point );
+					make_line ( line_ptr->line_id, line_ptr->frame_id, line_ptr->start_point, line_ptr->end_point, true );
 				}
-			}
+			} else if ( trajectory_map.find ( feedback->marker_name ) != trajectory_map.end () )
+      {
+        std::string point_name = feedback->marker_name;
+        trajMarkerPtr traj_ptr = trajectory_map [ point_name ];
+        geometry_msgs::Pose pose = feedback->pose;
+        geometry_msgs::Point new_point;
+        new_point.x = pose.position.x;
+      	new_point.y = pose.position.y;
+      	new_point.z = pose.position.z;
+        if ( traj_ptr->start_point_line_id_map.find ( point_name ) != traj_ptr->start_point_line_id_map.end () )
+        {
+          make_line ( traj_ptr->start_point_line_id_map [ point_name ], traj_ptr->frame_id, new_point, traj_ptr->start_point_name_end_point_map [ point_name ], false );
+          // std::cout << point_name << " point_idx = " << point_name.substr ( point_name.find_last_of ( "_" ) + 1 ) << std::endl;
+          int point_idx = std::stoi ( point_name.substr ( point_name.find_last_of ( "_" ) + 1 ) );
+          std::string end_point_name = "trajectory_" + std::to_string ( traj_ptr->trajectory_id ) + "_point_" + std::to_string ( point_idx + 1 );
+          traj_ptr->end_point_name_start_point_map [ end_point_name ] = new_point;
+        }
+        if ( traj_ptr->end_point_line_id_map.find ( point_name ) != traj_ptr->end_point_line_id_map.end () )
+        {
+          make_line ( traj_ptr->end_point_line_id_map [ point_name ], traj_ptr->frame_id, traj_ptr->end_point_name_start_point_map [ point_name ] , new_point, false );
+          // std::cout << point_name << " point_idx = " << point_name.substr ( point_name.find_last_of ( "_" ) + 1 ) << std::endl;
+          int point_idx = std::stoi ( point_name.substr ( point_name.find_last_of ( "_" ) + 1 ) );
+          std::string start_point_name = "trajectory_" + std::to_string ( traj_ptr->trajectory_id ) + "_point_" + std::to_string ( point_idx - 1 );
+          traj_ptr->start_point_name_end_point_map [ start_point_name ] = new_point;
+        }
+      }
       break;
 		}
     case visualization_msgs::InteractiveMarkerFeedback::MOUSE_DOWN:

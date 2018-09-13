@@ -6,7 +6,5 @@
 
   <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen"
         args="-d $(find tams_phasespace)/config/LineIteractiveMarker.rviz" />
-
-  <node pkg="tams_phasespace" name="LineIteractiveMarker" type="LineIteractiveMarker" output="screen" />
-
+        
 </launch>

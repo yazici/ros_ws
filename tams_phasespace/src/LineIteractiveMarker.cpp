@@ -11,7 +11,7 @@ int main ( int argc, char** argv )
 	server.reset ( new interactive_markers::InteractiveMarkerServer ( "stylus_node_marker_server", "", false ) );
 	marker_pub = nh_.advertise< visualization_msgs::Marker > ( "stylus_node_marker", 10 );
   menu_handler.insert( "delete", &processFeedback );
-  menu_handler.insert( "Add", &processFeedback );
+  // menu_handler.insert( "Add", &processFeedback );
 
   geometry_msgs::Pose pose;
   std::cout << "Add new 6DOF point, enter: 0\n"
