@@ -3,39 +3,52 @@
 /*
 ** Test the function for drawing lines and IteractiiveMarker
 */
-int main( int argc, char** argv )
+int main ( int argc, char** argv )
 {
-  ros::init( argc, argv, "MyLineMarker" );
-  ros::NodeHandle n;
+  ros::init ( argc, argv, "stylus_node_marker_test" );
+  ros::NodeHandle nh_;
 
-	server.reset( new interactive_markers::InteractiveMarkerServer( "MyInteractiveMarker", "", false ) );
-	marker_pub = n.advertise<visualization_msgs::Marker>( "visualization_marker", 10 );
-	ros::Duration(1).sleep();
-
+	server.reset ( new interactive_markers::InteractiveMarkerServer ( "stylus_node_marker_server", "", false ) );
+	marker_pub = nh_.advertise< visualization_msgs::Marker > ( "stylus_node_marker", 10 );
   menu_handler.insert( "delete", &processFeedback );
   menu_handler.insert( "Add", &processFeedback );
 
-	geometry_msgs::Pose pose;
-	pose.position.x = 1.0;
-	pose.position.y = 1.0;
-	pose.position.z = 1.0;
-	pose.orientation.w = 1.0;
-	make6DOFMarker( "point" + std::to_string(marker_counter), "world", pose );
-	marker_counter++;
+  geometry_msgs::Pose pose;
+  std::cout << "Add new 6DOF point, enter: 0\n"
+            << "Add new line, enter: 1\n"
+            << "Otherwise, enter: -1\n";
+  int input_num;
+  std::cin >> input_num;
 
-	InteractiveLineMarker myline( line_counter, "world" );
-	pose.position.x = 0.5;
-	pose.position.y = 0.3;
-	pose.position.z = 1.5;
-	myline.setStartPoint( pose );
-	pose.position.x = 1.5;
-	pose.position.y = 0.8;
-	pose.position.z = 1.5;
-	myline.setEndPoint( pose );
-	make_line( myline.line_id, myline.frame_id, myline.start_point, myline.end_point );
-	line_counter++;
+  if ( input_num == 0 )
+  {
+    pose.position.x = 1.0;
+  	pose.position.y = 1.0;
+  	pose.position.z = 1.0;
+  	pose.orientation.w = 1.0;
+  	make6DOFMarker ( "point" + std::to_string(marker_counter), "world", pose );
+  	marker_counter ++;
+  } else if ( input_num == 1 )
+  {
+    {
+      lineMarkerPtr line_ptr ( new InteractiveLineMarker ( line_counter, "world" ) );
+      pose.position.x = 0.5;
+    	pose.position.y = 0.3;
+    	pose.position.z = 1.5;
+      line_ptr->setStartPoint ( pose );
+      point_line_map.insert( std::make_pair ( InteractiveLineMarker::getStartPointName ( line_counter ), line_ptr ) );
+    }
+    {
+      lineMarkerPtr line_ptr = point_line_map [ InteractiveLineMarker::getStartPointName ( line_counter ) ];
+      pose.position.x = 1.5;
+    	pose.position.y = 0.8;
+    	pose.position.z = 1.5;
+      line_ptr->setEndPoint( pose );
+      point_line_map.insert( std::make_pair ( InteractiveLineMarker::getEndPointName ( line_counter ), line_ptr ) );
+      line_counter++;
+    }
+  }
 
   ros::spin();
   server.reset();
-
 }

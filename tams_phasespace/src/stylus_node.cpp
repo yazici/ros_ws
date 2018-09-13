@@ -139,6 +139,9 @@ enum StylusMode {
   MODE_ROTATION_WAITING_FOR_SECOND_CLICK,
   MODE_ROTATION_GOT_SECOND_CLICK,
 
+  MODE_TRAJECTORY_WAITING_FOR_FIRST_CLICK,
+  MODE_TRAJECTORY_WAITING_FOR_OTHER_CLICK,
+
   MODE_CANNOT_REACH
 };
 
@@ -161,7 +164,6 @@ class StylusNode {
     void buttonPressed();
     void buttonClicked( ros::Duration timeSincePressed );
     void buttonReleased();
-
 
     void timerCallback( const ros::TimerEvent& );
 
@@ -187,8 +189,6 @@ class StylusNode {
     phasespace_msgs::Rigid    lastStylusData;
     std_msgs::Header          lastButtonHeader;
     phasespace_msgs::Button   lastButtonData;
-    geometry_msgs::Point      start_point;
-    geometry_msgs::Point      end_point;
 
     double rate;
     unsigned long             seq;
@@ -306,7 +306,8 @@ void StylusNode::buttonPressed()
   ROS_INFO( "buttonPressed..." );
   // ROS_ERROR( "buttonPressed: IMPLEMENT ME!!!" );
 
-  switch( stylusMode ) {
+  switch( stylusMode )
+  {
     case MODE_IDLE:
     {
       ROS_WARN( "buttonPressed: MODE_IDLE, ignored." );
@@ -317,16 +318,10 @@ void StylusNode::buttonPressed()
        char buffer[1024];
        pthread_mutex_lock( &mutex );
        {
-         geometry_msgs::Pose pose;
-         pose = lastStylusData.pose;
+         geometry_msgs::Pose pose = lastStylusData.pose;
          sprintf( buffer, "pose: xyz=(%7.4lf %7.4lf %7.4lf) xyzw=(%7.4lf %7.4lf %7.4lf %7.4lf)" ,
-                          pose.position.x,
-                          pose.position.y,
-                          pose.position.z,
-                          pose.orientation.x,
-                          pose.orientation.y,
-                          pose.orientation.z,
-                          pose.orientation.w );
+                          pose.position.x, pose.position.y, pose.position.z,
+                          pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w );
        }
        pthread_mutex_unlock( &mutex );
        publishStylusLog( buffer );
@@ -334,24 +329,15 @@ void StylusNode::buttonPressed()
        ROS_WARN_STREAM( "Enter Mode: MODE_POINTING_GOT_POSE" << std::endl );
        break;
     }
-    case MODE_POINTING_GOT_POSE:
-    {
-      ROS_WARN( "buttonPressed: MODE_POINTING_GOT_POSE should not happen, switching to IDLE." );
-      stylusMode = MODE_IDLE;
-      break;
-    }
     case MODE_DISTANCE_WAITING_FOR_FIRST_CLICK:
     {
       pthread_mutex_lock( &mutex );
       {
         std::string frame_id = lastStylusHeader.frame_id;
-        geometry_msgs::Pose pose;
-        pose = lastStylusData.pose;
-        start_point.x = pose.position.x;
-        start_point.y = pose.position.y;
-        start_point.z = pose.position.z;
-        InteractiveLineMarker myline( line_counter, frame_id );
-        myline.setStartPoint( pose );
+        geometry_msgs::Pose start_point = lastStylusData.pose;
+        lineMarkerPtr line_ptr ( new InteractiveLineMarker ( line_counter, frame_id ) );
+        line_ptr->setStartPoint ( start_point );
+        point_line_map.insert( std::make_pair ( InteractiveLineMarker::getStartPointName ( line_counter ), line_ptr ) );
       }
       pthread_mutex_unlock( &mutex );
       stylusMode = MODE_DISTANCE_WAITING_FOR_SECOND_CLICK;
@@ -360,19 +346,55 @@ void StylusNode::buttonPressed()
     }
     case MODE_DISTANCE_WAITING_FOR_SECOND_CLICK:
     {
-      ROS_WARN( "buttonPressed: MODE_DISTANCE_WAITING_FOR_SECOND_CLICK should not happen, switching to IDLE." );
+      pthread_mutex_lock( &mutex );
+      {
+        geometry_msgs::Pose end_point = lastStylusData.pose;
+        lineMarkerPtr line_ptr = point_line_map [ InteractiveLineMarker::getStartPointName ( line_counter ) ];
+        line_ptr->setEndPoint ( end_point );
+        point_line_map.insert ( std::make_pair ( InteractiveLineMarker::getEndPointName ( line_counter ), line_ptr ) );
+        line_counter++;
+      }
+      pthread_mutex_unlock ( &mutex );
       stylusMode = MODE_IDLE;
+      ROS_WARN_STREAM( "Enter Mode: MODE_IDLE" << std::endl );
       break;
     }
-    case MODE_DISTANCE_GOT_SECOND_CLICK:
+    case MODE_TRAJECTORY_WAITING_FOR_FIRST_CLICK:
     {
-      ROS_WARN( "buttonPressed: MODE_DISTANCE_GOT_SECOND_CLICK should not happen, switching to IDLE." );
-      stylusMode = MODE_IDLE;
+      pthread_mutex_lock( &mutex );
+      {
+        std::string frame_id = lastStylusHeader.frame_id;
+        geometry_msgs::Pose new_point = lastStylusData.pose;
+        trajMarkerPtr traj_ptr ( new InteractiveTrajectoryMarker ( trajectory_counter, frame_id ) );
+        std::string point_name = traj_ptr->addPoint ( new_point );
+        trajectory_map.insert ( std::make_pair ( "traj_" + std::to_string ( trajectory_counter ), traj_ptr ) );
+        trajectory_map.insert ( std::make_pair ( point_name, traj_ptr ) );
+      }
+      pthread_mutex_unlock( &mutex );
+      stylusMode = MODE_TRAJECTORY_WAITING_FOR_OTHER_CLICK;
+      ROS_WARN_STREAM( "Enter Mode: MODE_TRAJECTORY_WAITING_FOR_OTHER_CLICK" << std::endl );
+      break;
+    }
+    case MODE_TRAJECTORY_WAITING_FOR_OTHER_CLICK:
+    {
+      pthread_mutex_lock( &mutex );
+      {
+        geometry_msgs::Pose new_point = lastStylusData.pose;
+        trajMarkerPtr traj_ptr = trajectory_map [ "traj_" + std::to_string ( trajectory_counter ) ];
+        std::string point_name = traj_ptr->addPoint( new_point );
+        trajectory_map.insert ( std::make_pair ( point_name, traj_ptr ) );
+      }
+      pthread_mutex_unlock( &mutex );
       break;
     }
     case MODE_UNKNOWN:
+    {
+
+    }
     default:
-         ROS_WARN( "buttonPressed: default MODE, should not happen, ignored." );
+    {
+      ROS_WARN( "buttonPressed: default MODE, should not happen, ignored." );
+    }
   }
 }
 
@@ -382,47 +404,27 @@ void StylusNode::buttonPressed()
  */
 void StylusNode::buttonReleased()
 {
-  ROS_INFO( "buttonReleased..." );
-  // ROS_ERROR( "buttonReleased: IMPLEMENT ME!!!" );
-  switch( stylusMode ) {
-
+  ROS_INFO ( "buttonReleased..." );
+  switch( stylusMode )
+  {
     case MODE_POINTING_GOT_POSE:
     {
-      pthread_mutex_lock( &mutex );
+      pthread_mutex_lock ( &mutex );
       {
         std::string frame_id = lastStylusHeader.frame_id;
-        geometry_msgs::Pose pose;
-        pose = lastStylusData.pose;
+        geometry_msgs::Pose pose = lastStylusData.pose;
         make6DOFMarker( "point_" + marker_counter, frame_id, pose );
         marker_counter++;
       }
-      pthread_mutex_unlock( &mutex );
+      pthread_mutex_unlock ( &mutex );
       stylusMode = MODE_IDLE;
-      ROS_WARN_STREAM( "Enter Mode: MODE_IDLE" << std::endl );
-      break;
-    }
-    case MODE_DISTANCE_WAITING_FOR_SECOND_CLICK:
-    {
-      pthread_mutex_lock( &mutex );
-      {
-        std::string frame_id = lastStylusHeader.frame_id;
-        geometry_msgs::Pose pose;
-        pose = lastStylusData.pose;
-        end_point.x = pose.position.x;
-        end_point.y = pose.position.y;
-        end_point.z = pose.position.z;
-        std::string start_point_name = "line_" + std::to_string(line_counter) + "_start_point";
-        InteractiveLineMarker* line_ptr = point_line_map[start_point_name];
-        line_ptr->setEndPoint( pose );
-        line_counter++;
-      }
-      pthread_mutex_unlock( &mutex );
-      stylusMode = MODE_IDLE;
-      ROS_WARN_STREAM( "Enter Mode: MODE_IDLE" << std::endl );
+      ROS_WARN_STREAM ( "Enter Mode: MODE_IDLE" << std::endl );
       break;
     }
     default:
-         ROS_WARN( "StylusNode.buttonReleased: default MODE, ignored." );
+    {
+      ROS_WARN( "StylusNode.buttonReleased: default MODE, ignored." );
+    }
   }
 }
 
@@ -517,14 +519,45 @@ void StylusNode::run() {
             break;
           }
           default:
-            ROS_WARN_STREAM( "Button [p] Pressed under Wrong Mode" << stylusMode << std::endl );
+            ROS_WARN_STREAM( "Button [d] Pressed under Wrong Mode" << stylusMode << std::endl );
         }
-        std::cout << "we are here in d" << std::endl;
         break;
       }
       case 'f':
       {
-        std::cout << "we are here in f" << std::endl;
+        std::cout << "we are in f" << std::endl;
+        break;
+      }
+      case 't':
+      {
+        switch( stylusMode )
+        {
+          case MODE_IDLE:
+          case MODE_UNKNOWN:
+          {
+            stylusMode = MODE_TRAJECTORY_WAITING_FOR_FIRST_CLICK;
+            ROS_WARN_STREAM( "Enter Mode: MODE_DISTANCE_WAITING_FOR_FIRST_CLICK" << std::endl );
+            break;
+          }
+          default:
+            ROS_WARN_STREAM( "Button [t] Pressed under Wrong Mode" << stylusMode << std::endl );
+        }
+        break;
+      }
+      case ESC:
+      {
+        switch( stylusMode )
+        {
+          case MODE_TRAJECTORY_WAITING_FOR_OTHER_CLICK:
+          {
+            trajectory_counter ++;
+            stylusMode = MODE_IDLE;
+            ROS_WARN_STREAM( "Enter Mode: MODE_IDLE" << std::endl );
+            break;
+          }
+          default:
+            ROS_WARN_STREAM( "Button [Esc] Pressed under Wrong Mode" << stylusMode << std::endl );
+        }
         break;
       }
       // ......................
@@ -560,19 +593,20 @@ void SIGINT_handler(int signal)
   exit( 0 );
 }
 
-int main(int argc, char *argv[]) {
+void add_marker_server_and_menu_handler ()
+{
+  ros::NodeHandle nh_;
+  server.reset( new interactive_markers::InteractiveMarkerServer ( "stylus_node_marker_server", "", false ) );
+  marker_pub = nh_.advertise < visualization_msgs::Marker > ( "stylus_node_marker", 10 );
+  menu_handler.insert ( "delete", &processFeedback );
+  // menu_handler.insert ( "Add", &processFeedback );
+}
+
+int main(int argc, char *argv[])
+{
   ros::init( argc, argv, "phasespace_stylus_node", 1 ); // 1 means NoSigintHandler
   std::signal( SIGINT, SIGINT_handler );
-
-  ros::NodeHandle n;
-
-  server.reset( new interactive_markers::InteractiveMarkerServer("MyInteractiveMarker", "", false) );
-  marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
-  ros::Duration(0.1).sleep();
-
-  menu_handler.insert( "delete", &processFeedback );
-  menu_handler.insert( "Add", &processFeedback );
-
+  add_marker_server_and_menu_handler ();
   StylusNode stylus_node = StylusNode();
   stylus_node_ptr = &stylus_node;
   stylus_node.run();
