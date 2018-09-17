@@ -231,7 +231,7 @@ public:
           if ( box_point_counter > 0 )
           {
             std::cout << "box point size: " << box_point_counter << "; range of x is [" << box_min_x << ", " << box_max_x << "];" << " range of y is [" << box_min_y << ", " << box_max_y << "]" << std::endl;
-            box_t_b box_n { {box_min_x, box_min_y + 0.03}, {box_max_x, box_max_y + 0.01} } ;
+            box_t_b box_n { {box_min_x, box_min_y}, {box_max_x, box_max_y} } ;
             print_box_t_b ( box_n );
             handle_box_tb ( box_n );
           }

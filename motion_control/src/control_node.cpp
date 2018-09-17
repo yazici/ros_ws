@@ -32,7 +32,6 @@ class ControlNode {
                      start_rough_localizer_, stop_rough_localizer_, start_box_segmenter_, stop_box_segmenter_,
                      start_scan_planner_, stop_scan_planner_, start_move_camera_;
   ros::ServiceClient start_do_scan_, start_rivet_localizer_, start_point_rivet_;
-  ros::ServiceServer stop_profile_scan_;
 
   boost::shared_ptr< moveit::planning_interface::MoveGroupInterface > move_group;
   boost::shared_ptr< moveit::planning_interface::PlanningSceneInterface > planning_scene_interface;
@@ -61,8 +60,6 @@ public:
     start_do_scan_ = nh_.serviceClient < std_srvs::Empty > ( "start_do_scan" );
     start_rivet_localizer_ = nh_.serviceClient < std_srvs::Empty > ( "start_rivet_localizer" );
     start_point_rivet_ = nh_.serviceClient < std_srvs::Empty > ( "start_point_rivet" );
-
-    stop_profile_scan_ = nh_.advertiseService ( "stop_profile_scan", &ControlNode::stop_profile_scan, this );
 
     move_group.reset ( new moveit::planning_interface::MoveGroupInterface ( PLANNING_GROUP ) );
     planning_scene_interface.reset ( new moveit::planning_interface::PlanningSceneInterface () );
@@ -134,11 +131,6 @@ public:
     // remove the aircraft frame
     remove_aircraft_frame_.call ( msg );
     start_do_scan_.call ( msg );
-  }
-
-  bool stop_profile_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
-  {
-    std_srvs::Empty msg;
     std::cout << "end profile scan" << std::endl;
     // move back to pose 2
     if ( set_pose2 () )
@@ -147,14 +139,13 @@ public:
       remove_aircraft_frame_.call ( msg );
       // call service rivet_localizer
       std::cout << "start rivet localizer" << std::endl;
-      start_rivet_localizer_.call ( msg );
+      // start_rivet_localizer_.call ( msg );
       // call service point_rivet
-      std::cout << "start point rivet" << std::endl;
-      start_point_rivet_.call ( msg );
+      std::cout << "start to point to rivet" << std::endl;
+      // start_point_rivet_.call ( msg );
       // stop fix table position
       stop_fix_table_position_.call ( msg );
     }
-    return true;
   }
 
 };

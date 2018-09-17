@@ -162,14 +162,6 @@ int K = 10;
 
 void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 {
-  // if the car is fixed, output old table position.
-  if ( is_fix_table_position )
-  {
-    std::cout << ros::Time::now() << ": publish old [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
-    publish_tf ( old_x_t, old_y_t, old_theta2 );
-    return;
-  }
-
   // convert from laserscan to pcl point cloud
   sensor_msgs::PointCloud2 sensor_pc2;
   projector_.projectLaser( *scan_in, sensor_pc2 );
@@ -298,6 +290,14 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     pcl_conversions::toPCL(ros::Time::now(), cloud_final->header.stamp);
     pub.publish( cloud_final );
 
+    // if the car is fixed, output old table position.
+    if ( is_fix_table_position )
+    {
+      std::cout << ros::Time::now() << ": publish old [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
+      publish_tf ( old_x_t, old_y_t, old_theta2 );
+      return;
+    }
+
     // calculate the central point of the table w.r.t the world frame
     get_the_central_point();
   }
@@ -305,15 +305,15 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 
 bool start_fix_table_position ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 {
-  std::cout << "fix table position" << is_fix_table_position << std::endl;
   is_fix_table_position = true;
+  std::cout << "is_fix_table_position = " << is_fix_table_position << std::endl;
   return true;
 }
 
 bool stop_fix_table_position ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 {
-  std::cout << "fix table position" << is_fix_table_position << std::endl;
   is_fix_table_position = false;
+  std::cout << "is_fix_table_position = " << is_fix_table_position << std::endl;
   return true;
 }
 

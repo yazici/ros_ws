@@ -96,10 +96,10 @@ public:
   void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
   {
     // if input cloud is empty, publish the old point cloud and return
-		if ( is_publish_ )
-		{
-			std::cout << "is_publish_ = " << is_publish_ << std::endl;
-		}
+		// if ( is_publish_ )
+		// {
+		// 	std::cout << "is_publish_ = " << is_publish_ << std::endl;
+		// }
     if ( !is_publish_ || ( cloud->width * cloud->height ) == 0 )
 		{
 			scene_cloud_total->header.frame_id = reference_frame;

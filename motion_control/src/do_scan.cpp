@@ -17,7 +17,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
-ros::ServiceClient start_profile_merger_, start_point_cloud_writer_, stop_profile_merger_, stop_profile_scan_;
+ros::ServiceClient start_profile_merger_, start_point_cloud_writer_, stop_profile_merger_;
 
 void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, float y_e, float z_e )
 {
@@ -101,7 +101,6 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
       stop_profile_merger_.call ( msg );
       std::cout << "write merged profile scan" << std::endl;
       start_point_cloud_writer_.call ( msg );
-      stop_profile_scan_.call ( msg );
     }
   }
 }
@@ -124,7 +123,7 @@ public:
 
 void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
 {
-  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan.cfg";;
+  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan_0.cfg";;
   std::cout << "***The path of the do_scan configuration file is: [" << cfgFileName << "]" << std::endl;
 
   double rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e;
@@ -167,7 +166,6 @@ int main ( int argc, char** argv )
   start_profile_merger_ = nh_.serviceClient < std_srvs::Empty > ( "start_profile_merger" );
   start_point_cloud_writer_ = nh_.serviceClient < std_srvs::Empty > ( "start_point_cloud_writer" );
   stop_profile_merger_ = nh_.serviceClient < std_srvs::Empty > ( "stop_profile_merger" );
-  stop_profile_scan_ = nh_.serviceClient < std_srvs::Empty > ( "stop_profile_scan" );
   ros::waitForShutdown ();
   return 0;
 }

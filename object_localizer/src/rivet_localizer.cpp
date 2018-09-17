@@ -143,13 +143,13 @@ void Visualize ( PointCloudT::Ptr cloud_in_transformed, PointCloudT::Ptr planar_
   viewer.setSize ( 1280, 1024 );
 
 	// Display the viewer
-	while ( !viewer.wasStopped () )
-  {
-    viewer.spinOnce ();
-	}
-
-	// close the viewer
-	viewer.close();
+	// while ( !viewer.wasStopped () )
+  // {
+  //   viewer.spinOnce ();
+	// }
+	//
+	// // close the viewer
+	// viewer.close();
 }
 
 // downsampling an input point cloud
@@ -398,7 +398,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 			float z = temp_point.z;
 			// float x_comp = std::max ( std::abs ( maxPoint.x ), std::abs ( minPoint.x ) );
 			if ( y >= minPoint.y && y <= maxPoint.y && z >= minPoint.z && z <= maxPoint.z
-					 && x_compare <= 0.0005 )
+					 && x_compare <= 0.0005 && x > 0.001 )
 			{
 		    PointT new_point;
 				// sum_x += x;
