@@ -92,59 +92,57 @@ public:
     return success;
   }
 
-  void generate_scan_plan ()
+  void execute_pipeline ()
   {
-    // step 1, add aircraft_frame to the planning scene.
     std_srvs::Empty msg;
+    // step 1, fix the table position and add aircraft_frame to the planning scene.
     if ( start_fix_table_position_.call ( msg ) && add_aircraft_frame_.call ( msg ) )
     {
-      std::cout << "Table position is fixed and aircraft frame has been added" << std::endl;
+      std::cout << "1, fix the table position and add the aircraft frame" << std::endl;
       // step 2, set the robot pose to pose 2.
+      std::cout << "2, set the robot pose to pose 2" << std::endl;
       if ( set_pose2 () )
       {
-        // step 3, start service pcl_merger, rough_localizer, box_segmenter, and scan_planner
+        // step 3, start services pcl_merger, rough_localizer, and box_segmenter
+        std::cout << "3, start services pcl_merger, rough_localizer, box_segmenter" << std::endl;
         if ( start_pcl_merger_.call ( msg ) && start_rough_localizer_.call ( msg )
              && start_box_segmenter_.call ( msg ) )
         {
           // step 4, start service move_camera
-          std::cout << "Start to move the camera" << std::endl;
+          std::cout << "4, start to move the camera" << std::endl;
           start_move_camera_.call ( msg );
-          // step 5, stop services pcl_merger, rough_localizer, box_segmenter, and scan_planner
+          // step 5, stop services pcl_merger, rough_localizer, and box_segmenter
+          std::cout << "5, stop services pcl_merger, rough_localizer, box_segmenter" << std::endl;
           if ( stop_pcl_merger_.call ( msg ) && stop_rough_localizer_.call ( msg ) && stop_box_segmenter_.call ( msg ) )
           {
             // step 6, generate scanning plans and write it to the configuration file [do_scan]
-            std::cout << "Start to generate scanning plans" << std::endl;
+            std::cout << "6, start to generate scanning plans" << std::endl;
             start_scan_planner_.call ( msg );
-            std::cout << "End to generate scanning plans" << std::endl;
-            // step 7, start profile scan
-            start_profile_scan ();
+
+            // step 7, remove the aircraft frame and start profile scan
+            std::cout << "7, remove the aircraft_frame and start the profile scanning" << std::endl;
+            remove_aircraft_frame_.call ( msg );
+            start_do_scan_.call ( msg );
+
+            // step 8, move back to pose 2
+            std::cout << "8, set the robot pose back to pose 2" << std::endl;
+            if ( set_pose2 () )
+            {
+              // step 9, call the service rivet_localizer
+              std::cout << "9, start rivet localizer" << std::endl;
+              // start_rivet_localizer_.call ( msg );
+
+              // step 10, call the service point_rivet
+              std::cout << "10, start to point to rivet" << std::endl;
+              // start_point_rivet_.call ( msg );
+
+              // step 11, stop fix table position
+              std::cout << "11, stop fix the table position" << std::endl;
+              stop_fix_table_position_.call ( msg );
+            }
           }
         }
       }
-    }
-  }
-
-  void start_profile_scan ( )
-  {
-    std_srvs::Empty msg;
-    std::cout << "start profile scan" << std::endl;
-    // remove the aircraft frame
-    remove_aircraft_frame_.call ( msg );
-    start_do_scan_.call ( msg );
-    std::cout << "end profile scan" << std::endl;
-    // move back to pose 2
-    if ( set_pose2 () )
-    {
-      // remove the the aircraft frame
-      remove_aircraft_frame_.call ( msg );
-      // call service rivet_localizer
-      std::cout << "start rivet localizer" << std::endl;
-      // start_rivet_localizer_.call ( msg );
-      // call service point_rivet
-      std::cout << "start to point to rivet" << std::endl;
-      // start_point_rivet_.call ( msg );
-      // stop fix table position
-      stop_fix_table_position_.call ( msg );
     }
   }
 
@@ -153,10 +151,10 @@ public:
 int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "control_node" );
-  ros::AsyncSpinner spinner ( 4 );
-  spinner.start ();
+  // ros::AsyncSpinner spinner ( 4 );
+  // spinner.start ();
   ControlNode control_node;
-  control_node.generate_scan_plan ();
-  ros::waitForShutdown ();
+  control_node.execute_pipeline ();
+  // ros::waitForShutdown ();
   return 0;
 }
