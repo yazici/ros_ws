@@ -130,7 +130,7 @@ public:
             {
               // step 9, call the service rivet_localizer
               std::cout << "9, start rivet localizer" << std::endl;
-              // start_rivet_localizer_.call ( msg );
+              start_rivet_localizer_.call ( msg );
 
               // step 10, call the service point_rivet
               std::cout << "10, start to point to rivet" << std::endl;
