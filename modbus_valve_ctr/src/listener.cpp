@@ -8,68 +8,74 @@
 #include <thread>
 #include <signal.h>
 
+#define ip_address "10.42.0.157"
 
-// using namespace std::this_thread; // sleep_for, sleep_until
-// using namespace std::chrono; // nanoseconds, system_clock, seconds
+modbus mb = modbus(ip_address, 502);
+
 
 
 void mySigintHandler(int sig)
 {
-  // Do some custom action.
-  // For example, publish a stop message to some other nodes.
-   // All the default sigint handler does is call shutdown()
   ros::shutdown();
 }
 
 void executionCallback(const std_msgs::Int64::ConstPtr& msg)
 {
   ROS_INFO("I heard: [%lli]", msg->data);
-
-    //ros::init(argc, argv, "my_node_name", ros::init_options::NoSigintHandler);
-
-  // Override the default ros sigint handler.
-  // This must be set after the first NodeHandle is created.
+  using namespace std::this_thread;                   // sleep_for, sleep_until
+  using namespace std::chrono;                        // nanoseconds, system_clock, seconds
   signal(SIGINT, mySigintHandler);
+  ros::NodeHandle nh("~");
+  ros::Publisher screw_pub = nh.advertise<std_msgs::Int64>("pos_trig", 1000);
+  std_msgs::Int64 msgs;
+  int count= 1;
+  msgs.data = count;
+  int XDKIO =0;
+  nh.getParam("XDK", XDKIO);
 
+  switch(XDKIO){
+  case 0:                                             // without using XDK
+    switch(msg->data){
+      case 1: 
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        // sleep_for(seconds(3)); 
+        // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
+        // sleep_for(seconds(5));
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        std::cout << "test1 without XDK" << endl ;
+        screw_pub.publish(msgs);                      // publish trigger for next position
+        ros::spinOnce();
+        break;
+      case 2:
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        std::cout << "test2 without XDK" << endl ;
+        break;
+    }
+    break;
+  case 1:                                             // using XDK
+    switch(msg->data){
+      case 1: 
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        // sleep_for(seconds(3)); 
+        // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
+        // sleep_for(seconds(5));
 
-    // create a modbus object
-    modbus mb = modbus("10.42.0.157", 502);
+          //  if (BoschXDK_trig ==1)
+          //  screw_pub.publish(msg);
+          //  ros::spinOnce();
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        std::cout << "test1 using XDK" << endl ;
+        screw_pub.publish(msgs);
+        ros::spinOnce();
+        break;
+      case 2:
+        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        std::cout << "test2 using XDK" << endl ;
+        break;
+    }
+    break;
 
-
-    // set slave id
-    mb.modbus_set_slave_id(1);
-
-    // connect with the server
-    mb.modbus_connect();
-
-
-
-    // read holding registers           function 0x03
-    // uint16_t read_holding_regs[1];
-    // mb.modbus_read_holding_registers(40003, 1, read_holding_regs);{
-    // std::cout << *read_holding_regs << "  test" << endl;
-
-//while(true){
-    //if(*read_holding_regs==0){
-    mb.modbus_write_register(40003, 1);         // write single reg
-    // Nr1: unten links
-    // Nr2:
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    mb.modbus_write_register(40003, 2);         // write single reg
-    // Nr1: unten links
-    // Nr2:
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    //}                     // wait 1 Second
-    //mb.modbus_write_register(40003, 2);         // write single reg
-    // mb.modbus_read_holding_registers(40003, 1, read_holding_regs);
-    // std::cout << *read_holding_regs << endl;
-//}
-
-
-    // close connection and free the memory
-    mb.modbus_close();
-    delete(&mb);
-    ros::spin();
+  }
 }
 
 
@@ -77,13 +83,20 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "listener");
 
+  // mb.modbus_set_slave_id(1);
+  // mb.modbus_connect();
+  
   ros::NodeHandle n;
-
-  std::cout << "test" << endl ;
-
+  ros::Rate loop_rate(1);
   ros::Subscriber sub = n.subscribe("valve_trig", 1000, executionCallback);
 
-  ros::spin();
+  while(ros::ok())
+  {
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 
+  mb.modbus_close();
+  delete(&mb);
   return 0;
 }
