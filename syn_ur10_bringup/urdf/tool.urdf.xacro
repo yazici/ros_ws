@@ -1,15 +1,21 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tool" >
 
+  <!-- change the value of rivet_tool_x_offset to adjust x offset -->
+  <xacro:property name="rivet_tool_x_offset" value="0.050" />
+  <!-- change the value of rivet_tool_y_adjust to adjust y offset -->
+  <xacro:property name="rivet_tool_y_adjust" value="0.0000" />
+  <!-- change the value of rivet_tool_z_adjust to adjust z offset -->
+  <xacro:property name="rivet_tool_z_adjust" value="0.0006" />
+
   <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2900-50_macro.urdf.xacro" />
   <xacro:property name="rivet_tool_part_1_length" value="0.07415" />
   <xacro:property name="rivet_tool_part_1_radius" value="0.015" />
   <xacro:property name="rivet_tool_part_2_height" value="0.012" />
-  <xacro:property name="rivet_tool_part_2_length" value="0.0625" />
+  <xacro:property name="rivet_tool_part_2_length" value="${0.0625 - rivet_tool_y_adjust}" />
   <xacro:property name="rivet_tool_part_2_width" value="0.03" />
   <xacro:property name="rivet_tool_part_3_length" value="0.044" />
   <xacro:property name="rivet_tool_part_3_radius" value="0.0075" />
-  <xacro:property name="rivet_tool_offset" value="0.000" />
 
   <link name="tool_base">
     <inertial>
@@ -53,13 +59,10 @@
     </collision>
   </link>
 
-  <!--change this property to offset the -->
-  <xacro:property name="rivet_tool_part_1_z_offset" value="0.0006" />
-
   <joint name="tool_base_rivet_tool_part_1_joint" type="fixed">
     <parent link="tool_base"/>
     <child link="rivet_tool_part_1"/>
-    <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_part_1_z_offset}" rpy="${radians(90)} 0 0" />
+    <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_y_adjust}" rpy="${radians(90)} 0 0" />
   </joint>
 
   <link name="rivet_tool_part_2">
@@ -121,7 +124,7 @@
   <joint name="rivet_tool_part_3_rivet_tool_joint" type="fixed">
     <parent link="rivet_tool_part_3"/>
     <child link="rivet_tool"/>
-    <origin xyz="0 0 ${rivet_tool_part_3_length + rivet_tool_offset}" rpy="${radians(-90)} ${radians(90)} 0" />
+    <origin xyz="0 0 ${rivet_tool_part_3_length + rivet_tool_x_offset}" rpy="${radians(-90)} ${radians(90)} 0" />
   </joint>
 
   <!-- scanCONTROL_2900-50  sensor -->
