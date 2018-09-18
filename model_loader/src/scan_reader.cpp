@@ -148,10 +148,13 @@ void get_the_central_point()
 
   if ( std::abs( old_x_t - x_t ) > 0.05 || std::abs( old_y_t - y_t ) > 0.05 || std::abs( old_theta2 - theta2 ) * 180 / PI > 2 )
   {
-    std::cout << "New Degree = " << theta2 * 180 / PI << " [x_t, y_t] = [" << x_t << ", " << y_t << "]" << std::endl;
     old_x_t = x_t;
     old_y_t = y_t;
     old_theta2 = theta2;
+    std::cout << ros::Time::now() << ": publish new [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
+  } else
+  {
+    std::cout << ros::Time::now() << ": publish old [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
   }
   publish_tf ( old_x_t, old_y_t, old_theta2 );
 }
@@ -293,7 +296,7 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     // if the car is fixed, output old table position.
     if ( is_fix_table_position )
     {
-      std::cout << ros::Time::now() << ": publish old [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
+      std::cout << ros::Time::now() << ": publish fixed [x, y, theta] = [" << old_x_t << ", " << old_y_t << ", " << old_theta2 << "]" << std::endl;
       publish_tf ( old_x_t, old_y_t, old_theta2 );
       return;
     }
