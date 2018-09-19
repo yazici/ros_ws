@@ -57,3 +57,6 @@ target_link_libraries(do_scan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(point_rivet src/point_rivet.cpp)
 target_link_libraries(point_rivet ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(pose_test src/pose_test.cpp)
+target_link_libraries(pose_test ${catkin_LIBRARIES} ${Boost_LIBRARIES})
