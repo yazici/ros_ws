@@ -2,14 +2,14 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tool" >
 
   <!-- change the value of rivet_tool_x_offset to adjust x offset -->
-  <xacro:property name="rivet_tool_x_offset" value="0.050" />
+  <xacro:property name="rivet_tool_x_offset" value="0.000" />
   <!-- change the value of rivet_tool_y_adjust to adjust y offset -->
-  <xacro:property name="rivet_tool_y_adjust" value="0.0000" />
+  <xacro:property name="rivet_tool_y_adjust" value="0.005" />
   <!-- change the value of rivet_tool_z_adjust to adjust z offset -->
-  <xacro:property name="rivet_tool_z_adjust" value="0.0006" />
+  <xacro:property name="rivet_tool_z_adjust" value="0.0005" />
 
   <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2900-50_macro.urdf.xacro" />
-  <xacro:property name="rivet_tool_part_1_length" value="0.07415" />
+  <xacro:property name="rivet_tool_part_1_length" value="0.07015" />
   <xacro:property name="rivet_tool_part_1_radius" value="0.015" />
   <xacro:property name="rivet_tool_part_2_height" value="0.012" />
   <xacro:property name="rivet_tool_part_2_length" value="${0.0625 - rivet_tool_y_adjust}" />
@@ -62,7 +62,7 @@
   <joint name="tool_base_rivet_tool_part_1_joint" type="fixed">
     <parent link="tool_base"/>
     <child link="rivet_tool_part_1"/>
-    <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_y_adjust}" rpy="${radians(90)} 0 0" />
+    <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_z_adjust}" rpy="${radians(90)} 0 0" />
   </joint>
 
   <link name="rivet_tool_part_2">

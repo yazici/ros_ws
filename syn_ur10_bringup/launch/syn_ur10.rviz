@@ -25,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -486,7 +486,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: false
+      Enabled: true
       Line Style:
         Line Width: 0.0299999993
         Value: Lines
@@ -499,7 +499,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -542,7 +542,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -559,7 +559,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: true
       Image Topic: /camera/color/image_raw
@@ -596,7 +596,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -613,14 +613,14 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.0199999996
       Name: Axes
       Radius: 0.00300000003
       Reference Frame: scanCONTROL_2900-50_scanner_laser_link
-      Value: true
+      Value: false
     - Class: rviz/Axes
       Enabled: true
       Length: 0.100000001
@@ -640,7 +640,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -657,7 +657,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Axes
       Enabled: true
       Length: 0.100000001
@@ -667,10 +667,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 1
+      Length: 0.100000001
       Name: Axes
       Radius: 0.0199999996
-      Reference Frame: <Fixed Frame>
+      Reference Frame: rivet_0
       Value: true
   Enabled: true
   Global Options:
@@ -697,7 +697,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.1196816
+      Distance: 4.66503048
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -712,10 +712,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.01979768
+      Pitch: 0.454798758
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.9724021
+      Yaw: 0.869228363
     Saved: ~
 Window Geometry:
   Displays:
