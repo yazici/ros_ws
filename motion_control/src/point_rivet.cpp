@@ -87,8 +87,8 @@ void do_point_rivet ()
 
     if ( success )
     {
-      move_group.setMaxVelocityScalingFactor ( 0.02 );
-      move_group.setMaxAccelerationScalingFactor ( 0.02 );
+      move_group.setMaxVelocityScalingFactor ( 0.05 );
+      move_group.setMaxAccelerationScalingFactor ( 0.05 );
       move_group.move ();
       ros::Duration ( 1.0 ) .sleep ();
 
@@ -120,7 +120,7 @@ void do_point_rivet ()
       if ( fraction > 0.98 )
       {
         // scale the velocity and acceleration of the trajectory
-        const double scale_factor = 0.08;
+        const double scale_factor = 0.15;
         int point_size = trajectory.joint_trajectory.points.size();
         for ( int point_idx = 0; point_idx < point_size; point_idx++ )
         {
@@ -157,8 +157,10 @@ int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "point_rivet" );
   ros::NodeHandle nh_;
+  ros::AsyncSpinner spinner(4);
+  spinner.start();
   ros::ServiceServer start_point_rivet_;
   start_point_rivet_ = nh_.advertiseService ( "start_point_rivet", &start_point_rivet );
-  ros::spin ();
+  ros::waitForShutdown ();
   return 0;
 }
