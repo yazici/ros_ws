@@ -76,7 +76,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     if ( fraction > 0.99 )
     {
       // scale the velocity and the acceleration of the trajectory
-      const double scale_factor = 0.01;
+      const double scale_factor = 0.02;
       int point_size = trajectory.joint_trajectory.points.size ();
       for ( int point_idx = 0; point_idx < point_size; point_idx++ )
       {
