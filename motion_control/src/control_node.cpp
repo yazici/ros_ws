@@ -84,7 +84,7 @@ public:
     bool success = ( move_group->plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
     if ( success )
     {
-      std::cout << "reset the robot pose to pose 2" << std::endl;
+      // std::cout << "reset the robot pose to pose 2" << std::endl;
       move_group->setMaxVelocityScalingFactor ( 0.1 );
       move_group->setMaxAccelerationScalingFactor ( 0.1 );
       move_group->move ();
@@ -95,6 +95,16 @@ public:
   void execute_pipeline ()
   {
     std_srvs::Empty msg;
+    // step 0, update the table position
+    std::cout << "0, update the table position" << std::endl;
+    stop_fix_table_position_.call ( msg );
+    std::cout << "\tContinue with current position (y/n): ";
+    std::string answer_str;
+    std::cin >> answer_str;
+    if ( answer_str == "n" )
+    {
+      return;
+    }
     // step 1, fix the table position and add aircraft_frame to the planning scene.
     if ( start_fix_table_position_.call ( msg ) && add_aircraft_frame_.call ( msg ) )
     {
@@ -134,27 +144,27 @@ public:
 
               // step 10, call the service point_rivet
               std::cout << "10, start to point to rivet" << std::endl;
-              // start_point_rivet_.call ( msg );
+              start_point_rivet_.call ( msg );
 
-              // step 11, stop fix table position
-              std::cout << "11, stop fix the table position" << std::endl;
-              stop_fix_table_position_.call ( msg );
+              // step 11, call the service point_rivet
+              std::cout << "11, set the robot pose back to pose 2" << std::endl;
+              set_pose2 ();
             }
           }
         }
       }
     }
   }
-
+  
 };
 
 int main ( int argc, char** argv )
 {
   ros::init ( argc, argv, "control_node" );
-  // ros::AsyncSpinner spinner ( 4 );
-  // spinner.start ();
+  ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
   ControlNode control_node;
   control_node.execute_pipeline ();
-  // ros::waitForShutdown ();
+  ros::waitForShutdown ();
   return 0;
 }
