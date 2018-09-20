@@ -132,8 +132,11 @@ public:
   bool end_pcl_merge ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     is_merge_ = false;
-    // reset the scene_cloud_total
+    // reset the scene_cloud_total and publish the empty scene_cloud_total
     scene_cloud_total.reset ( new pcl::PointCloud< PointT > );
+    scene_cloud_total->header.frame_id = reference_frame;
+    pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+    cloud_pub_.publish ( scene_cloud_total );
     return true;
   }
 

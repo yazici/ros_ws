@@ -152,6 +152,11 @@ public:
   bool stop_box_segmenter ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     is_publish_ = false;
+    // publish an empty point cloud
+    PointCloudT::Ptr empty_cloud ( new PointCloudT );
+    empty_cloud->header.frame_id = reference_frame;
+    pcl_conversions::toPCL ( ros::Time::now(), empty_cloud->header.stamp );
+    cloud_pub_.publish ( empty_cloud );
     return true;
   }
 

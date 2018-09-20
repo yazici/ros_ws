@@ -36,9 +36,9 @@ void executionCallback(const std_msgs::Int64::ConstPtr& msg)
   switch(XDKIO){
   case 0:                                             // without using XDK
     switch(msg->data){
-      case 1: 
+      case 1:
         // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
-        // sleep_for(seconds(3)); 
+        // sleep_for(seconds(3));
         // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
         // sleep_for(seconds(5));
         // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
@@ -54,9 +54,9 @@ void executionCallback(const std_msgs::Int64::ConstPtr& msg)
     break;
   case 1:                                             // using XDK
     switch(msg->data){
-      case 1: 
+      case 1:
         // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
-        // sleep_for(seconds(3)); 
+        // sleep_for(seconds(3));
         // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
         // sleep_for(seconds(5));
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
   // mb.modbus_set_slave_id(1);
   // mb.modbus_connect();
-  
+
   ros::NodeHandle n;
   ros::Rate loop_rate(1);
   ros::Subscriber sub = n.subscribe("valve_trig", 1000, executionCallback);

@@ -147,8 +147,11 @@ public:
 	bool stop_profile_merger ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 	{
 	  is_publish_ = false;
-		// clear up old profile point cloud
+		// clear up old profile point cloud and publish the empty one
 		scene_cloud_total.reset ( new pcl::PointCloud< PointT > );
+		scene_cloud_total->header.frame_id = reference_frame;
+		pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+		cloud_pub_.publish ( scene_cloud_total );
 	  return true;
 	}
 
