@@ -45,8 +45,18 @@
   <node name="rivet_localizer" pkg="object_localizer" type="rivet_localizer" respawn="true" output="screen">
   </node>
 
-  <!-- start the node "point_rivet" which provides the service "start_point_rivet" -->
+  <!-- start the node "point_rivet" which provides the service "start_point_rivet"
   <node name="point_rivet" pkg="motion_control" type="point_rivet" respawn="true" output="screen">
+  </node>
+  -->
+
+  <!-- start the node "point_rivet_b" which provides the service "start_point_rivet" -->
+  <node name="point_rivet_b" pkg="motion_control" type="point_rivet_b" respawn="true" output="screen">
+  </node>
+
+  <!-- start the node "valve_listener" -->
+  <node name="valve_listener" pkg="modbus_valve_ctr" type="listener" respawn="true" output="screen">
+    <param name="_XDK" type="int" value="0"/>
   </node>
 
 </launch>
