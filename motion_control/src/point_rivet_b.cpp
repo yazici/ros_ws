@@ -153,20 +153,24 @@ void do_point_rivet ()
 
           my_plan.trajectory_ = trajectory;
           move_group.execute ( my_plan );
-          // trigger the valve
-          std_msgs::Int64 trigger_value;
-          trigger_value.data = 1;
-          valve_trig_pub.publish ( trigger_value );
-          wait_for_return = true;
-          ros::Rate loop_rate ( 30 );
-          while ( wait_for_return )
+          // test the trigger state
+          if ( target_counter % 3 == 2 )
           {
-            ros::spinOnce ();
-            loop_rate.sleep ();
+            // trigger the valve
+            std_msgs::Int64 trigger_value;
+            trigger_value.data = 1;
+            valve_trig_pub.publish ( trigger_value );
+            wait_for_return = true;
+            ros::Rate loop_rate ( 30 );
+            while ( wait_for_return )
+            {
+              ros::spinOnce ();
+              loop_rate.sleep ();
+            }
           }
         }
       }
-      ros::Duration ( 3.0 ) .sleep ();
+      ros::Duration ( 2.0 ) .sleep ();
     }
   }
 }
