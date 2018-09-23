@@ -161,7 +161,7 @@ void get_the_central_point()
 
 laser_geometry::LaserProjection projector_;
 ros::Publisher pub;
-int K = 10;
+int K = 6;
 
 void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
 {
@@ -223,7 +223,7 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     pcl_conversions::toPCL(ros::Time::now(), temp_cloud_right->header.stamp);
     //pub.publish (temp_cloud_right);
 
-    // serch for 10 nearest point
+    // serch for K nearest point
     pcl::KdTreeFLANN< pcl::PointXYZ > kdtree;
     pcl::PointXYZ searchPoint;
     searchPoint.x = 0.0;
@@ -233,48 +233,54 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     std::vector<float> pointNKNSquaredDistance ( K );
 
     std::vector<pcl::PointXYZ> final_vector_left;
-    kdtree.setInputCloud ( temp_cloud_left );
-    if ( kdtree.nearestKSearch ( searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance ) > 0 )
+    if ( point_counter_left > 0 )
     {
-      float x_sum = 0.0;
-      float y_sum = 0.0;
-      for ( size_t i = 0; i < pointIdxNKNSearch.size (); ++i )
+      kdtree.setInputCloud ( temp_cloud_left );
+      if ( kdtree.nearestKSearch ( searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance ) > 0 )
       {
-        pcl::PointXYZ temp_point;
-        temp_point.x = temp_cloud_left->points[ pointIdxNKNSearch[i] ].x;
-        x_sum += temp_point.x;
-        temp_point.y = temp_cloud_left->points[ pointIdxNKNSearch[i] ].y;
-        y_sum += temp_point.y;
-        temp_point.z = temp_cloud_left->points[ pointIdxNKNSearch[i] ].z;
-        final_vector_left.push_back ( temp_point );
-        //std::cout << "[" << final_vector_left[i].x << ", " << final_vector_left[i].y << ", " << final_vector_left[i].z << "]; ";
+        float x_sum = 0.0;
+        float y_sum = 0.0;
+        for ( size_t i = 0; i < pointIdxNKNSearch.size (); ++i )
+        {
+          pcl::PointXYZ temp_point;
+          temp_point.x = temp_cloud_left->points[ pointIdxNKNSearch[i] ].x;
+          x_sum += temp_point.x;
+          temp_point.y = temp_cloud_left->points[ pointIdxNKNSearch[i] ].y;
+          y_sum += temp_point.y;
+          temp_point.z = temp_cloud_left->points[ pointIdxNKNSearch[i] ].z;
+          final_vector_left.push_back ( temp_point );
+          //std::cout << "[" << final_vector_left[i].x << ", " << final_vector_left[i].y << ", " << final_vector_left[i].z << "]; ";
+        }
+        point1_x = x_sum / K;
+        point1_y = y_sum / K;
       }
-      point1_x = x_sum / K;
-      point1_y = y_sum / K;
+      //std::cout << final_vector_left.size () << std::endl;
     }
-    //std::cout << final_vector_left.size () << std::endl;
 
     std::vector<pcl::PointXYZ> final_vector_right;
-    kdtree.setInputCloud ( temp_cloud_right );
-    if ( kdtree.nearestKSearch ( searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+    if ( point_counter_right > 0 )
     {
-      float x_sum = 0.0;
-      float y_sum = 0.0;
-      for ( size_t i = 0; i < pointIdxNKNSearch.size (); ++i )
+      kdtree.setInputCloud ( temp_cloud_right );
+      if ( kdtree.nearestKSearch ( searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
       {
-        pcl::PointXYZ temp_point;
-        temp_point.x = temp_cloud_right->points[ pointIdxNKNSearch[i] ].x;
-        x_sum += temp_point.x;
-        temp_point.y = temp_cloud_right->points[ pointIdxNKNSearch[i] ].y;
-        y_sum += temp_point.y;
-        temp_point.z = temp_cloud_right->points[ pointIdxNKNSearch[i] ].z;
-        final_vector_right.push_back ( temp_point );
-        //std::cout << "[" << final_vector_right[i].x << ", " << final_vector_right[i].y << ", " << final_vector_right[i].z << "]; ";
+        float x_sum = 0.0;
+        float y_sum = 0.0;
+        for ( size_t i = 0; i < pointIdxNKNSearch.size (); ++i )
+        {
+          pcl::PointXYZ temp_point;
+          temp_point.x = temp_cloud_right->points[ pointIdxNKNSearch[i] ].x;
+          x_sum += temp_point.x;
+          temp_point.y = temp_cloud_right->points[ pointIdxNKNSearch[i] ].y;
+          y_sum += temp_point.y;
+          temp_point.z = temp_cloud_right->points[ pointIdxNKNSearch[i] ].z;
+          final_vector_right.push_back ( temp_point );
+          //std::cout << "[" << final_vector_right[i].x << ", " << final_vector_right[i].y << ", " << final_vector_right[i].z << "]; ";
+        }
+        point2_x = x_sum / K;
+        point2_y = y_sum / K;
       }
-      point2_x = x_sum / K;
-      point2_y = y_sum / K;
+      //std::cout << final_vector_right.size () << std::endl;
     }
-    //std::cout << final_vector_right.size () << std::endl;
 
     // merge temp_cloud_left and temp_cloud_right and publish the point cloud message
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_final ( new pcl::PointCloud<pcl::PointXYZ> );
@@ -284,7 +290,7 @@ void scanCallback ( const sensor_msgs::LaserScan::ConstPtr& scan_in )
     cloud_final->height = 1;
     for( pcl::PointXYZ temp_point : final_vector_left )
     {
-      cloud_final->points.push_back (temp_point);
+      cloud_final->points.push_back ( temp_point );
     }
     for( pcl::PointXYZ temp_point : final_vector_right )
     {
