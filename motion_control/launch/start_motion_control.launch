@@ -52,11 +52,8 @@
 
   <!-- start the node "point_rivet_b" which provides the service "start_point_rivet" -->
   <node name="point_rivet_b" pkg="motion_control" type="point_rivet_b" respawn="true" output="screen">
-  </node>
-
-  <!-- start the node "valve_listener" -->
-  <node name="valve_listener" pkg="modbus_valve_ctr" type="listener" respawn="true" output="screen">
-    <param name="_XDK" type="int" value="0"/>
+      <param name="_XDK" type="int" value="-1"/>
+      <param name="ip_address" type="str" value="192.168.2.183"/>
   </node>
 
 </launch>

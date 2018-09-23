@@ -10,7 +10,6 @@
 #include <tf/transform_listener.h>
 
 #include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit_msgs/DisplayRobotState.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit_msgs/AttachedCollisionObject.h>
@@ -18,8 +17,70 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
-ros::Publisher valve_trig_pub;
-bool wait_for_return;
+#include "modbus.h"
+#include "modbus_exception.h"
+
+class RivetToolControl
+{
+private:
+  boost::shared_ptr < modbus > mb_ptr;
+  std::string ip_address;
+  int XDKIO = -1;
+public:
+  RivetToolControl ();
+  ~RivetToolControl ();
+  void connect ();
+  void new_rivet ();
+  void start_screwing ();
+};
+
+RivetToolControl::RivetToolControl ()
+{
+  ros::NodeHandle nh_p_ ( "~" );
+  nh_p_.getParam ( "XDK", XDKIO );
+  nh_p_.getParam ( "ip_address", ip_address );
+  mb_ptr.reset ( new modbus ( ip_address, 502 ) );
+}
+
+RivetToolControl::~RivetToolControl ()
+{
+  mb_ptr->modbus_close ();
+}
+
+void RivetToolControl::connect ()
+{
+  if ( XDKIO == -1 )
+  {
+    std::cout << "RivetToolControl::connect ip_address = " << ip_address << std::endl;
+    return;
+  }
+  mb_ptr->modbus_set_slave_id ( 1 );
+  mb_ptr->modbus_connect ();
+}
+
+void RivetToolControl::new_rivet ()
+{
+  if ( XDKIO == -1 )
+  {
+    std::cout << "RivetToolControl::new_rivet" << std::endl;
+    return;
+  }
+  mb_ptr->modbus_write_register ( 40003, 1 );
+  ros::Duration ( 0.5 ) .sleep ();
+}
+
+void RivetToolControl::start_screwing ()
+{
+  if ( XDKIO == -1 )
+  {
+    std::cout << "RivetToolControl::start_screwing" << std::endl;
+    return;
+  }
+  mb_ptr->modbus_write_register(40003, 2);
+  ros::Duration ( 3 ) .sleep ();
+}
+
+boost::shared_ptr < RivetToolControl > rivet_tool_ctrl_ptr;
 
 class Target
 {
@@ -60,15 +121,62 @@ void CfgFileReader ( std::queue< Target >& target_queue )
   input.close();
 }
 
+void move_trajectory ( geometry_msgs::Pose& target_pose1, geometry_msgs::Pose& target_pose2, moveit::planning_interface::MoveGroupInterface& move_group )
+{
+  std::vector < geometry_msgs::Pose> waypoints;
+  waypoints.push_back ( target_pose1 );
+  waypoints.push_back ( target_pose2 );
+
+  moveit_msgs::RobotTrajectory trajectory;
+  const double jump_threshold = 0.0;
+  const double eef_step = 0.01;
+  double fraction = move_group.computeCartesianPath ( waypoints, eef_step, jump_threshold, trajectory );
+  ROS_INFO_NAMED ( "point_rivet", "trajectory plan (Cartesian path) (%.2f%% acheived)", fraction * 100.0 );
+
+  if ( fraction > 0.98 )
+  {
+    // scale the velocity and acceleration of the trajectory
+    const double scale_factor = 0.15;
+    int point_size = trajectory.joint_trajectory.points.size();
+    for ( int point_idx = 0; point_idx < point_size; point_idx++ )
+    {
+      trajectory_msgs::JointTrajectoryPoint point_tmp = trajectory.joint_trajectory.points[point_idx];
+      int size_tmp = point_tmp.velocities.size();
+      for ( int i = 0; i <= size_tmp; i++ )
+      {
+        float velocity_tmp = point_tmp.velocities[i];
+        trajectory.joint_trajectory.points[point_idx].velocities[i] = velocity_tmp * scale_factor;
+        float acceleration_tmp = point_tmp.accelerations[i];
+        trajectory.joint_trajectory.points[point_idx].accelerations[i] = acceleration_tmp * scale_factor;
+      }
+      ros::Duration time_from_start_tmp = point_tmp.time_from_start;
+      trajectory.joint_trajectory.points[point_idx].time_from_start.fromSec ( time_from_start_tmp.toSec() / scale_factor );
+    }
+
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    my_plan.trajectory_ = trajectory;
+    move_group.execute ( my_plan );
+  }
+}
+
+void set_target_pose ( Target& target, geometry_msgs::Pose& target_pose )
+{
+  target_pose.position.x = target.x;
+  target_pose.position.y = target.y;
+  target_pose.position.z = target.z;
+  float rollt  = target.roll;
+  float pitcht = target.pitch;
+  float yawt   = target.yaw;
+  target_pose.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+}
+
 void do_point_rivet ()
 {
-  int target_counter = 0;
   std::queue< Target > target_queue;
   CfgFileReader ( target_queue );
   // create interface for motion planning
   static const std::string PLANNING_GROUP = "rivet_tool";
   moveit::planning_interface::MoveGroupInterface move_group ( PLANNING_GROUP );
-  moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
   ROS_INFO_NAMED( "point_rivet", "Reference frame: %s", move_group.getPlanningFrame ().c_str () );
   ROS_INFO_NAMED( "point_rivet", "End effector link: %s", move_group.getEndEffectorLink ().c_str () );
 
@@ -76,19 +184,12 @@ void do_point_rivet ()
   {
     Target target = target_queue.front ();
     target_queue.pop ();
-    target_counter ++;
     geometry_msgs::Pose target_pose1;
-  	target_pose1.position.x = target.x;
-    target_pose1.position.y = target.y;
-  	target_pose1.position.z = target.z;
-    float rollt  = target.roll;
-    float pitcht = target.pitch;
-    float yawt   = target.yaw;
-    target_pose1.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    set_target_pose ( target, target_pose1 );
     move_group.setPoseTarget ( target_pose1 );
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     ROS_INFO_STREAM ( "Start for planning" );
-    bool success = ( move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
+    bool success = ( move_group.plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
     ROS_INFO_NAMED ( "point_rivet", "planning for goal pose is %s", success ? "success" : "FAILED" );
 
     if ( success )
@@ -98,86 +199,39 @@ void do_point_rivet ()
       move_group.move ();
       ros::Duration ( 1.0 ) .sleep ();
 
-      // start scanning the part
+      // start the screwing part
       while ( !target_queue.empty () )
       {
-        std::vector<geometry_msgs::Pose> waypoints;
-        waypoints.push_back ( target_pose1 );
+        // get the new rivet
+        rivet_tool_ctrl_ptr -> new_rivet ();
+        Target target = target_queue.front();
+        target_queue.pop();
+        geometry_msgs::Pose target_pose2;
+        set_target_pose ( target, target_pose2 );
+        move_trajectory ( target_pose1, target_pose2, move_group );
+        target_pose1 = target_pose2;
+        // screwing the rivet
+        rivet_tool_ctrl_ptr -> start_screwing ();
 
-        while ( !target_queue.empty () )
+        // move back the rivet_tool
+        target = target_queue.front();
+        target_queue.pop();
+        set_target_pose ( target, target_pose2 );
+        move_trajectory ( target_pose1, target_pose2, move_group );
+        target_pose1 = target_pose2;
+        // move to the next rivet if there exist the next rivet
+        if ( !target_queue.empty () )
         {
-          Target target = target_queue.front();
+          target = target_queue.front();
           target_queue.pop();
-          target_counter++;
-          geometry_msgs::Pose target_pose2 = target_pose1;
-          target_pose2.position.x = target.x;
-          target_pose2.position.y = target.y;
-        	target_pose2.position.z = target.z;
-          rollt  = target.roll;
-          pitcht = target.pitch;
-          yawt   = target.yaw;
-          target_pose2.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
-          waypoints.push_back ( target_pose2 );
-          if ( target_counter % 3 == 2 )
-          {
-            break;
-            target_pose1 = target_pose2;
-          }
-        }
-
-        moveit_msgs::RobotTrajectory trajectory;
-        const double jump_threshold = 0.0;
-        const double eef_step = 0.01;
-        double fraction = move_group.computeCartesianPath ( waypoints, eef_step, jump_threshold, trajectory );
-        ROS_INFO_NAMED ( "point_rivet", "scan plan (Cartesian path) (%.2f%% acheived)", fraction * 100.0 );
-
-        if ( fraction > 0.98 )
-        {
-          // scale the velocity and acceleration of the trajectory
-          const double scale_factor = 0.15;
-          int point_size = trajectory.joint_trajectory.points.size();
-          for ( int point_idx = 0; point_idx < point_size; point_idx++ )
-          {
-            trajectory_msgs::JointTrajectoryPoint point_tmp = trajectory.joint_trajectory.points[point_idx];
-            int size_tmp = point_tmp.velocities.size();
-            for ( int i = 0; i <= size_tmp; i++ )
-            {
-              float velocity_tmp = point_tmp.velocities[i];
-              trajectory.joint_trajectory.points[point_idx].velocities[i] = velocity_tmp * scale_factor;
-              float acceleration_tmp = point_tmp.accelerations[i];
-              trajectory.joint_trajectory.points[point_idx].accelerations[i] = acceleration_tmp * scale_factor;
-            }
-            ros::Duration time_from_start_tmp = point_tmp.time_from_start;
-            trajectory.joint_trajectory.points[point_idx].time_from_start.fromSec ( time_from_start_tmp.toSec() / scale_factor );
-          }
-
-          my_plan.trajectory_ = trajectory;
-          move_group.execute ( my_plan );
-          // test the trigger state
-          if ( target_counter % 3 == 2 )
-          {
-            // trigger the valve
-            std_msgs::Int64 trigger_value;
-            trigger_value.data = 1;
-            valve_trig_pub.publish ( trigger_value );
-            wait_for_return = true;
-            ros::Rate loop_rate ( 30 );
-            while ( wait_for_return )
-            {
-              ros::spinOnce ();
-              loop_rate.sleep ();
-            }
-          }
+          set_target_pose ( target, target_pose2 );
+          move_trajectory ( target_pose1, target_pose2, move_group );
+          target_pose1 = target_pose2;
         }
       }
-      ros::Duration ( 2.0 ) .sleep ();
+      ros::Duration ( 1.0 ) .sleep ();
     }
   }
-}
-
-void posCallback ( const std_msgs::Int64::ConstPtr& msg )
-{
-  wait_for_return = false;
 }
 
 bool start_point_rivet ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
@@ -188,14 +242,14 @@ bool start_point_rivet ( std_srvs::Empty::Request& req, std_srvs::Empty::Respons
 
 int main ( int argc, char** argv )
 {
-  ros::init ( argc, argv, "point_rivet" );
+  ros::init ( argc, argv, "point_rivet_b" );
   ros::NodeHandle nh_;
-  ros::AsyncSpinner spinner(4);
-  spinner.start();
+  ros::AsyncSpinner spinner ( 4 );
+  spinner.start ();
+  rivet_tool_ctrl_ptr.reset ( new RivetToolControl () );
+  rivet_tool_ctrl_ptr -> connect ();
   ros::ServiceServer start_point_rivet_;
   start_point_rivet_ = nh_.advertiseService ( "start_point_rivet", &start_point_rivet );
-  valve_trig_pub = nh_.advertise < std_msgs::Int64 > ( "/valve_trig", 10 );
-  ros::Subscriber pos_sub = nh_.subscribe ( "pos_trig", 10, posCallback );
   ros::waitForShutdown ();
   return 0;
 }
