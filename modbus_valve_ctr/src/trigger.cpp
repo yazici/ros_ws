@@ -12,7 +12,8 @@ int main(int argc, char **argv)
 
   ros::Publisher trigger_pub = n.advertise<std_msgs::Int64>("valve_trig", 1000);
 
-  ros::Rate loop_rate(30);
+  ros::Rate loop_rate(1);
+  int count = 0;
 
 
   while (ros::ok())
@@ -24,6 +25,7 @@ int main(int argc, char **argv)
     ros::spinOnce();
 
     loop_rate.sleep();
+    ++count;
     }
 
 

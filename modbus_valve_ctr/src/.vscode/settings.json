@@ -1,7 +1,5 @@
 {
-    "C_Cpp.dimInactiveRegions": true,
     "files.associations": {
-        "thread": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cstddef": "cpp",
@@ -19,6 +17,7 @@
         "limits": "cpp",
         "new": "cpp",
         "ostream": "cpp",
+        "sstream": "cpp",
         "streambuf": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
@@ -28,10 +27,10 @@
         "ctime": "cpp",
         "memory": "cpp",
         "ratio": "cpp",
-        "sstream": "cpp",
         "stdexcept": "cpp",
         "string_view": "cpp",
         "system_error": "cpp",
+        "thread": "cpp",
         "tuple": "cpp",
         "utility": "cpp"
     }

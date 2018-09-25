@@ -8,7 +8,7 @@
 #include <thread>
 #include <signal.h>
 
-#define ip_address "10.42.0.157"
+#define ip_address "192.168.2.184"
 
 modbus mb = modbus(ip_address, 502);
 
@@ -32,22 +32,23 @@ void executionCallback(const std_msgs::Int64::ConstPtr& msg)
   msgs.data = count;
   int XDKIO =0;
   nh.getParam("XDK", XDKIO);
+  // uint16_t write_regs[3] = {1,2};
 
   switch(XDKIO){
   case 0:                                             // without using XDK
     switch(msg->data){
       case 1:
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
-        // sleep_for(seconds(3));
-        // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
-        // sleep_for(seconds(5));
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        sleep_for(seconds(3));
+        mb.modbus_write_register(40003, 3);//, write_regs);         // write single reg Nr2: oben links
+        sleep_for(seconds(5));
+        mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
         std::cout << "test1 without XDK" << endl ;
         screw_pub.publish(msgs);                      // publish trigger for next position
         ros::spinOnce();
         break;
       case 2:
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+         mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
         std::cout << "test2 without XDK" << endl ;
         break;
     }
@@ -55,21 +56,21 @@ void executionCallback(const std_msgs::Int64::ConstPtr& msg)
   case 1:                                             // using XDK
     switch(msg->data){
       case 1:
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
-        // sleep_for(seconds(3));
-        // mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
-        // sleep_for(seconds(5));
+        mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        sleep_for(seconds(3));
+        mb.modbus_write_register(40003, 2);         // write single reg Nr2: oben links
+        sleep_for(seconds(5));
 
           //  if (BoschXDK_trig ==1)
           //  screw_pub.publish(msg);
           //  ros::spinOnce();
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
         std::cout << "test1 using XDK" << endl ;
         screw_pub.publish(msgs);
         ros::spinOnce();
         break;
       case 2:
-        // mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
+        mb.modbus_write_register(40003, 1);         // write single reg Nr1: unten links
         std::cout << "test2 using XDK" << endl ;
         break;
     }
@@ -83,8 +84,8 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "listener");
 
-  // mb.modbus_set_slave_id(1);
-  // mb.modbus_connect();
+  mb.modbus_set_slave_id(1);
+  mb.modbus_connect();
 
   ros::NodeHandle n;
   ros::Rate loop_rate(1);
@@ -97,6 +98,6 @@ int main(int argc, char **argv)
   }
 
   mb.modbus_close();
-  delete(&mb);
+  //delete(&mb);
   return 0;
 }
