@@ -109,13 +109,15 @@ namespace microepsilon_scancontrol
   bool ScannerNode::laser_off ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     publishing_ = false;
-    return laser_.setLaserPower ( false );
+    return true;
+    // return laser_.setLaserPower ( false );
   }
 
   bool ScannerNode::laser_on ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     publishing_ = true;
-    return laser_.setLaserPower ( true );
+    return true;
+    // return laser_.setLaserPower ( true );
   }
 
 }

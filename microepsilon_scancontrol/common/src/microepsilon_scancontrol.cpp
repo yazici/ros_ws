@@ -241,11 +241,11 @@ namespace microepsilon_scancontrol
         disconnect();
         return;
       }
-      if ( !setLaserPower( true ) )
-      {
-        disconnect();
-        return;
-      }
+      // if ( !setLaserPower( true ) )
+      // {
+      //   disconnect();
+      //   return;
+      // }
     }
   }
 
@@ -257,7 +257,7 @@ namespace microepsilon_scancontrol
       {
         stopScanning ();
       }
-      setLaserPower ( false );
+      // setLaserPower ( false );
       disconnect ();
     }
   }
@@ -311,7 +311,7 @@ namespace microepsilon_scancontrol
       {
         stopScanning ();
       }
-      setLaserPower ( false );
+      // setLaserPower ( false );
       disconnect ();
     }
     connect ();
@@ -321,11 +321,11 @@ namespace microepsilon_scancontrol
       {
         return false;
       }
-      if ( !setLaserPower ( true ) )
-      {
-        disconnect();
-        return false;
-      }
+      // if ( !setLaserPower ( true ) )
+      // {
+      //   disconnect();
+      //   return false;
+      // }
     }
     else
     {
@@ -334,15 +334,16 @@ namespace microepsilon_scancontrol
     return true;
   }
 
-  bool Scanner::setLaserPower ( bool on )
-  {
-    guint32 value = on ? 0x82000002 : 0x82000000;
-    if ( llt_.SetFeature ( FEATURE_FUNCTION_LASERPOWER, value ) < GENERAL_FUNCTION_OK )
-    {
-      std::cout << "Error while setting trigger!\n";
-      return false;
-    }
-    return true;
-  }
+  // remove the function for setting the power of the laserscanner
+  // bool Scanner::setLaserPower ( bool on )
+  // {
+  //   guint32 value = on ? 0x82000002 : 0x82000000;
+  //   if ( llt_.SetFeature ( FEATURE_FUNCTION_LASERPOWER, value ) < GENERAL_FUNCTION_OK )
+  //   {
+  //     std::cout << "Error while setting trigger!\n";
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
 }  // namespace microepsilon_scancontrol

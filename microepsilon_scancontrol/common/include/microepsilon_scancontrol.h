@@ -58,7 +58,6 @@ namespace microepsilon_scancontrol
     bool reconnect ();
     bool startScanning ();
     bool stopScanning ();
-    bool setLaserPower ( bool on );
   };
 
 }  // namespace microepsilon_scancontrol
