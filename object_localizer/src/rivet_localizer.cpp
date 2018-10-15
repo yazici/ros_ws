@@ -142,13 +142,13 @@ void Visualize ( PointCloudT::Ptr cloud_in_transformed, PointCloudT::Ptr planar_
   {
     viewer.spinOnce ();
 		boost::this_thread::sleep ( boost::posix_time::microseconds ( 100000 ) );
-		std::string answer;
-		std::cout << "stop? (y/n)" << endl;
-		std::cin >> answer;
-		if ( answer == "y" )
-		{
-			break;
-		}
+		// std::string answer;
+		// std::cout << "stop? (y/n)" << endl;
+		// std::cin >> answer;
+		// if ( answer == "y" )
+		// {
+		// 	break;
+		// }
 	}
 }
 

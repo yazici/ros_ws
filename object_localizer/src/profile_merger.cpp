@@ -41,7 +41,7 @@ void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 {
   static pcl::VoxelGrid<PointT> grid;
   grid.setInputCloud ( cloud );
-  grid.setLeafSize ( 0.0001f, 0.0001f, 0.0001f );
+  grid.setLeafSize ( 0.0002f, 0.0002f, 0.0002f );
   grid.filter ( *cloud_sampled );
 	std::printf( "Downsampled cloud size is %d, %d\n", cloud_sampled->width, cloud_sampled->height );
 }
@@ -147,11 +147,11 @@ public:
 	bool stop_profile_merger ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 	{
 	  is_publish_ = false;
-		// clear up old profile point cloud and publish the empty one
-		// scene_cloud_total.reset ( new pcl::PointCloud< PointT > );
-		// scene_cloud_total->header.frame_id = reference_frame;
-		// pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
-		// cloud_pub_.publish ( scene_cloud_total );
+		// clear the profile point cloud and publish the empty one
+		scene_cloud_total->clear ();
+		scene_cloud_total->header.frame_id = reference_frame;
+		pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+		cloud_pub_.publish ( scene_cloud_total );
 	  return true;
 	}
 

@@ -62,7 +62,7 @@ void getMinMax3D ( const pcl::PointCloud<PointT> &cloud, PointT &min_pt, PointT 
   max_p.setConstant (-FLT_MAX);
 
   // If the data is dense, we don't need to check for NaN
-  if (cloud.is_dense)
+  if ( cloud.is_dense )
   {
     for (size_t i = 0; i < cloud.points.size (); ++i)
     {
