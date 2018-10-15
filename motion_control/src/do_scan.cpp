@@ -64,8 +64,9 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     pitcht = 0;
     yawt = 0;
     target_pose2.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    // just do one way of scanning
     waypoints.push_back ( target_pose2 );
-    waypoints.push_back ( target_pose1 );
+    // waypoints.push_back ( target_pose1 );
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
