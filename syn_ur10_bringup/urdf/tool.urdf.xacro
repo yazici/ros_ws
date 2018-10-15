@@ -6,7 +6,7 @@
   <!-- change the value of rivet_tool_y_adjust to adjust y offset -->
   <xacro:property name="rivet_tool_y_adjust" value="0.005" />
   <!-- change the value of rivet_tool_z_adjust to adjust z offset -->
-  <xacro:property name="rivet_tool_z_adjust" value="0.0005" />
+  <xacro:property name="rivet_tool_z_adjust" value="0.000" />
 
   <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2900-50_macro.urdf.xacro" />
   <xacro:property name="rivet_tool_part_1_length" value="0.07015" />

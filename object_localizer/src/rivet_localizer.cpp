@@ -142,6 +142,13 @@ void Visualize ( PointCloudT::Ptr cloud_in_transformed, PointCloudT::Ptr planar_
   {
     viewer.spinOnce ();
 		boost::this_thread::sleep ( boost::posix_time::microseconds ( 100000 ) );
+		std::string answer;
+		std::cout << "stop? (y/n)" << endl;
+		std::cin >> answer;
+		if ( answer == "y" )
+		{
+			break;
+		}
 	}
 }
 
@@ -515,7 +522,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	{
 		Eigen::Vector4f rivet_point_final;
 		Eigen::Vector4f rivet_point_in, rivet_point_in_final;
-		rivet_point_in << 0.0, rivet_point ( 1 ), rivet_point ( 2 ), 1.0;
+		rivet_point_in << -0.0028, rivet_point ( 1 ), rivet_point ( 2 ), 1.0;
 		rivet_point_final = transform_total_inverse * rivet_point;
 		rivet_point_in_final = transform_total_inverse * rivet_point_in;
 		rivet_vector_final.push_back ( rivet_point_final );
