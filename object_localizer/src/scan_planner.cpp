@@ -30,13 +30,14 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/common/transforms.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 std::string reference_frame = "world";
 
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
-float scan_offset = 0.08;
+float scan_offset = 0.10;
 float scan_distance = 0.08;
 
 void show_segment_cloud ( PointCloudT::ConstPtr cloud )
@@ -190,6 +191,57 @@ float calculate_theta ( PointCloudT::ConstPtr cloudSegmented, Eigen::Vector3f& c
   }
 }
 
+float get_central_point ( PointCloudT::Ptr segment_cloud, Eigen::Vector3f& central_point )
+{
+  PointT minPt, maxPt, searchPoint, midPt;
+  getMinMax3D ( *segment_cloud, minPt, maxPt );
+  // get the (x, y, z) of maximum and minimum points
+  std::cout << "Min [x, y, z]: = [" << minPt.x << ", " << minPt.y << ", " << minPt.z << "]" << std::endl;
+  std::cout << "Max [x, y, z]: = [" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << "]" << std::endl;
+  // calculate the middle point
+  searchPoint.x = ( maxPt.x + minPt.x ) / 2.0;
+  searchPoint.y = ( maxPt.y + minPt.y ) / 2.0;
+  searchPoint.z = ( maxPt.z + minPt.z ) / 2.0;
+  // search the points within the radius of 4.5 centimeter
+  std::vector < int > pointIdxRadiusSearch;
+  std::vector < float > pointRadiusSquaredDistance;
+  float radius = 0.045;
+  std::cout << "Neighbors within radius search at (" << searchPoint.x << " " << searchPoint.y << " " << searchPoint.z
+            << ") with radius=" << radius << std::endl;
+  pcl::KdTreeFLANN < PointT > kdtree;
+  kdtree.setInputCloud ( segment_cloud );
+  midPt.x = midPt.y = midPt.z = 0;
+  minPt.z = maxPt.z = searchPoint.z;
+  if ( kdtree.radiusSearch ( searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
+  {
+    for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i)
+    {
+      midPt.x += segment_cloud->points[ pointIdxRadiusSearch[i] ].x;
+      midPt.y += segment_cloud->points[ pointIdxRadiusSearch[i] ].y;
+      midPt.z += segment_cloud->points[ pointIdxRadiusSearch[i] ].z;
+      if ( segment_cloud->points[ pointIdxRadiusSearch[i] ].z >= maxPt.z )
+      {
+        maxPt = segment_cloud->points[ pointIdxRadiusSearch[i] ];
+      }
+      if ( segment_cloud->points[ pointIdxRadiusSearch[i] ].z <= minPt.z )
+      {
+        minPt = segment_cloud->points[ pointIdxRadiusSearch[i] ];
+      }
+    }
+    midPt.x = midPt.x / pointIdxRadiusSearch.size ();
+    midPt.y = midPt.y / pointIdxRadiusSearch.size ();
+    midPt.z = midPt.z / pointIdxRadiusSearch.size ();
+  }
+  central_point ( 0 ) = midPt.x;
+  central_point ( 1 ) = midPt.y;
+  central_point ( 2 ) = midPt.z;
+  std::cout << "new Mid [x, y, z]: = [" << midPt.x << ", " << midPt.y << ", " << midPt.z << "]" << std::endl;
+  std::cout << "new Min [x, y, z]: = [" << minPt.x << ", " << minPt.y << ", " << minPt.z << "]" << std::endl;
+  std::cout << "new Max [x, y, z]: = [" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << "]" << std::endl;
+  float theta = atan2 ( std::abs ( maxPt.z - minPt.z ), std::abs ( maxPt.y - minPt.y ) ) * 180.0 / M_PI + 90.0;
+  return theta;
+}
+
 class ScanPlanner
 {
 public:
@@ -233,8 +285,11 @@ public:
           pcl::fromPCLPointCloud2 ( pcl_pc2, *segment_cloud );
           // show_segment_cloud( segment_cloud );
           // calculate_bounding_box( segment_cloud );
+
           Eigen::Vector3f central_point;
-          float theta = calculate_theta ( segment_cloud, central_point );
+          // float theta = calculate_theta ( segment_cloud, central_point );
+          // new method to find theta and the central point.
+          float theta = get_central_point ( segment_cloud, central_point );
           float x_0 = central_point ( 0 );
           float y_0 = central_point ( 1 );
           float z_0 = central_point ( 2 );
