@@ -37,8 +37,8 @@ public:
 RivetToolControl::RivetToolControl ()
 {
   ros::NodeHandle nh_p_ ( "~" );
-  nh_p_.getParam ( "XDK", XDKIO );
-  nh_p_.getParam ( "ip_address", ip_address );
+  nh_p_.getParam ( "_XDK", XDKIO );
+  nh_p_.getParam ( "_ip_address", ip_address );
   mb_ptr.reset ( new modbus ( ip_address, 502 ) );
 }
 
@@ -66,7 +66,7 @@ void RivetToolControl::new_rivet ()
     return;
   }
   mb_ptr->modbus_write_register ( 40003, 1 );
-  ros::Duration ( 0.5 ) .sleep ();
+  // ros::Duration ( 0.5 ) .sleep ();
 }
 
 void RivetToolControl::start_screwing ()
@@ -76,8 +76,8 @@ void RivetToolControl::start_screwing ()
     std::cout << "RivetToolControl::start_screwing" << std::endl;
     return;
   }
-  mb_ptr->modbus_write_register(40003, 2);
-  ros::Duration ( 3 ) .sleep ();
+  mb_ptr->modbus_write_register(40003, 3);
+  // ros::Duration ( 5 ) .sleep ();
 }
 
 boost::shared_ptr < RivetToolControl > rivet_tool_ctrl_ptr;
@@ -188,7 +188,7 @@ void do_point_rivet ()
     set_target_pose ( target, target_pose1 );
     move_group.setPoseTarget ( target_pose1 );
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    ROS_INFO_STREAM ( "Start for planning" );
+    ROS_INFO_STREAM ( "Move to start pose:" );
     bool success = ( move_group.plan ( my_plan ) == moveit::planning_interface::MoveItErrorCode::SUCCESS );
     ROS_INFO_NAMED ( "point_rivet", "planning for goal pose is %s", success ? "success" : "FAILED" );
 
