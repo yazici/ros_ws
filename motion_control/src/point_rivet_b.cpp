@@ -204,14 +204,14 @@ void do_point_rivet ()
       {
         // get the new rivet
         rivet_tool_ctrl_ptr -> new_rivet ();
-        Target target = target_queue.front();
+        Target target = target_queue.front ();
         target_queue.pop();
+        // start screwing the rivet before moving to the rivet
+        rivet_tool_ctrl_ptr -> start_screwing ();
         geometry_msgs::Pose target_pose2;
         set_target_pose ( target, target_pose2 );
         move_trajectory ( target_pose1, target_pose2, move_group );
         target_pose1 = target_pose2;
-        // screwing the rivet
-        rivet_tool_ctrl_ptr -> start_screwing ();
 
         // move back the rivet_tool
         target = target_queue.front();
