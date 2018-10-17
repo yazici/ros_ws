@@ -31,6 +31,7 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/common/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 std::string reference_frame = "world";
 
@@ -39,6 +40,19 @@ typedef pcl::PointCloud< PointT > PointCloudT;
 
 float scan_offset = 0.10;
 float scan_distance = 0.08;
+
+int filter_mean_k = 40;
+float filter_stddev = 1.0;
+
+// filtering an input point cloud
+void filterOutliner ( PointCloudT::Ptr cloud )
+{
+	static pcl::StatisticalOutlierRemoval < PointT > sor;
+  sor.setInputCloud ( cloud );
+  sor.setMeanK ( filter_mean_k );
+  sor.setStddevMulThresh ( filter_stddev );
+  sor.filter ( *cloud );
+}
 
 void show_segment_cloud ( PointCloudT::ConstPtr cloud )
 {
@@ -143,7 +157,7 @@ void calculate_bounding_box ( PointCloudT::ConstPtr cloudSegmented )
 
 template < typename T > int sgn ( T val )
 {
-    return (T(0) < val) - (val < T(0));
+    return ( T ( 0 ) < val ) - ( val < T ( 0 ) );
 }
 
 float calculate_theta ( PointCloudT::ConstPtr cloudSegmented, Eigen::Vector3f& central_point )
@@ -193,6 +207,7 @@ float calculate_theta ( PointCloudT::ConstPtr cloudSegmented, Eigen::Vector3f& c
 
 float get_central_point ( PointCloudT::Ptr segment_cloud, Eigen::Vector3f& central_point )
 {
+  filterOutliner ( segment_cloud );
   PointT minPt, maxPt, searchPoint, midPt;
   getMinMax3D ( *segment_cloud, minPt, maxPt );
   // get the (x, y, z) of maximum and minimum points
@@ -214,7 +229,7 @@ float get_central_point ( PointCloudT::Ptr segment_cloud, Eigen::Vector3f& centr
   minPt.z = maxPt.z = searchPoint.z;
   if ( kdtree.radiusSearch ( searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
   {
-    for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i)
+    for ( size_t i = 0; i < pointIdxRadiusSearch.size (); ++i )
     {
       midPt.x += segment_cloud->points[ pointIdxRadiusSearch[i] ].x;
       midPt.y += segment_cloud->points[ pointIdxRadiusSearch[i] ].y;
@@ -235,10 +250,42 @@ float get_central_point ( PointCloudT::Ptr segment_cloud, Eigen::Vector3f& centr
   central_point ( 0 ) = midPt.x;
   central_point ( 1 ) = midPt.y;
   central_point ( 2 ) = midPt.z;
+
+  PointT minPt_2, maxPt_2;
+  minPt_2.x = minPt_2.y = minPt_2.z = 0;
+  maxPt_2.x = maxPt_2.y = maxPt_2.z = 0;
+  radius = 0.01;
+  if ( kdtree.radiusSearch ( maxPt, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
+  {
+    for ( size_t i = 0; i < pointIdxRadiusSearch.size (); ++i )
+    {
+      maxPt_2.x += segment_cloud->points[ pointIdxRadiusSearch[i] ].x;
+      maxPt_2.y += segment_cloud->points[ pointIdxRadiusSearch[i] ].y;
+      maxPt_2.z += segment_cloud->points[ pointIdxRadiusSearch[i] ].z;
+    }
+    maxPt_2.x = maxPt_2.x / pointIdxRadiusSearch.size ();
+    maxPt_2.y = maxPt_2.y / pointIdxRadiusSearch.size ();
+    maxPt_2.z = maxPt_2.z / pointIdxRadiusSearch.size ();
+  }
+
+  radius = 0.01;
+  if ( kdtree.radiusSearch ( minPt, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
+  {
+    for ( size_t i = 0; i < pointIdxRadiusSearch.size (); ++i )
+    {
+      minPt_2.x += segment_cloud->points[ pointIdxRadiusSearch[i] ].x;
+      minPt_2.y += segment_cloud->points[ pointIdxRadiusSearch[i] ].y;
+      minPt_2.z += segment_cloud->points[ pointIdxRadiusSearch[i] ].z;
+    }
+    minPt_2.x = minPt_2.x / pointIdxRadiusSearch.size ();
+    minPt_2.y = minPt_2.y / pointIdxRadiusSearch.size ();
+    minPt_2.z = minPt_2.z / pointIdxRadiusSearch.size ();
+  }
+
   std::cout << "new Mid [x, y, z]: = [" << midPt.x << ", " << midPt.y << ", " << midPt.z << "]" << std::endl;
-  std::cout << "new Min [x, y, z]: = [" << minPt.x << ", " << minPt.y << ", " << minPt.z << "]" << std::endl;
-  std::cout << "new Max [x, y, z]: = [" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << "]" << std::endl;
-  float theta = atan2 ( std::abs ( maxPt.z - minPt.z ), std::abs ( maxPt.y - minPt.y ) ) * 180.0 / M_PI + 90.0;
+  std::cout << "new Min [x, y, z]: = [" << minPt_2.x << ", " << minPt_2.y << ", " << minPt_2.z << "]" << std::endl;
+  std::cout << "new Max [x, y, z]: = [" << maxPt_2.x << ", " << maxPt_2.y << ", " << maxPt_2.z << "]" << std::endl;
+  float theta = atan2 ( std::abs ( maxPt_2.z - minPt_2.z ), std::abs ( maxPt_2.y - minPt_2.y ) ) * 180.0 / M_PI + 90.0;
   return theta;
 }
 
