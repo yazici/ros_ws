@@ -124,7 +124,7 @@ public:
 
 void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
 {
-  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan_0.cfg";;
+  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan.cfg";;
   std::cout << "***The path of the do_scan configuration file is: [" << cfgFileName << "]" << std::endl;
 
   double rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e;
@@ -148,8 +148,8 @@ bool start_do_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& r
   // read the configuration file
   std::vector< ScanPlan > scan_plan_vector;
   CfgFileReader ( scan_plan_vector );
-  std::cout << "Choose a scanning plan using the scan_plan_idx:" << std::endl;
-  int scan_plan_idx;
+  // std::cout << "Choose a scanning plan using the scan_plan_idx:" << std::endl;
+  int scan_plan_idx = 1;
   std::cin >> scan_plan_idx;
   ScanPlan scan_plan = scan_plan_vector [ scan_plan_idx ];
   do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
