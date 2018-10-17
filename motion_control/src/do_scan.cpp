@@ -150,7 +150,7 @@ bool start_do_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& r
   CfgFileReader ( scan_plan_vector );
   // std::cout << "Choose a scanning plan using the scan_plan_idx:" << std::endl;
   int scan_plan_idx = 1;
-  std::cin >> scan_plan_idx;
+  // std::cin >> scan_plan_idx;
   ScanPlan scan_plan = scan_plan_vector [ scan_plan_idx ];
   do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
   return true;
