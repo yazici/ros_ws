@@ -37,8 +37,8 @@ public:
 RivetToolControl::RivetToolControl ()
 {
   ros::NodeHandle nh_p_ ( "~" );
-  nh_p_.getParam ( "_XDK", XDKIO );
-  nh_p_.getParam ( "_ip_address", ip_address );
+  nh_p_.getParam ( "XDK", XDKIO );
+  nh_p_.getParam ( "ip_address", ip_address );
   mb_ptr.reset ( new modbus ( ip_address, 502 ) );
 }
 
