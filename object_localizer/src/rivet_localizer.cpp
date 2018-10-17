@@ -536,8 +536,8 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	point_rivet_fs.close();
 
 	// step 11, show the point cloud
-  std::printf ( "Visualizing point clouds...\n" );
-	Visualize ( cloud_in_transformed, planar_cloud, cloud_rivet );
+  // std::printf ( "Visualizing point clouds...\n" );
+	// Visualize ( cloud_in_transformed, planar_cloud, cloud_rivet );
 }
 
 class RivetLocalizer
