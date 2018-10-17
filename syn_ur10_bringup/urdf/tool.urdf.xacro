@@ -4,7 +4,7 @@
   <!-- change the value of rivet_tool_x_offset to adjust x offset -->
   <xacro:property name="rivet_tool_x_offset" value="0.000" />
   <!-- change the value of rivet_tool_y_adjust to adjust y offset -->
-  <xacro:property name="rivet_tool_y_adjust" value="0.005" />
+  <xacro:property name="rivet_tool_y_adjust" value="0.0055" />
   <!-- change the value of rivet_tool_z_adjust to adjust z offset -->
   <xacro:property name="rivet_tool_z_adjust" value="0.000" />
 
