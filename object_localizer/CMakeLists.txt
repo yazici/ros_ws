@@ -36,6 +36,9 @@ include_directories(
 add_executable(pcl_merger src/pcl_merger.cpp)
 target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(cam_pc_processor src/cam_pc_processor.cpp)
+target_link_libraries(cam_pc_processor ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(profile_merger src/profile_merger.cpp)
 target_link_libraries(profile_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
