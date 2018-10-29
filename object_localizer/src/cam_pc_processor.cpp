@@ -55,7 +55,39 @@ public:
 		std::cout << "[" << cloud->header.stamp << "] Input point cloud has [" << scene_cloud_->width << "*" << scene_cloud_->height << " = " << scene_cloud_->width * scene_cloud_->height << "] data points" << std::endl;
 
 		// downsampling and transforming the input point cloud
-		filterOutliner ( scene_cloud_ );
+		// filterOutliner ( scene_cloud_ );
+		tf::Vector3 point(0, 0, 0);
+		tf::Vector3 point_n(0, 0, 0);
+    float x_v, y_v, z_v, z_max, z_min;
+		x_v = y_v = z_v = 0;
+    z_max = 0;
+    z_min = 100;
+    int point_counter = 0;
+
+		for ( PointT temp_point : scene_cloud_->points )
+		{
+      if (!pcl_isfinite (temp_point.x) ||
+          !pcl_isfinite (temp_point.y) ||
+          !pcl_isfinite (temp_point.z))
+          continue;
+			x_v += temp_point.x;
+			y_v += temp_point.y;
+			z_v += temp_point.z;
+      point_counter++;
+      if ( z_max < temp_point.z )
+      {
+        z_max = temp_point.z;
+      }
+      if ( z_min > temp_point.z )
+      {
+        z_min = temp_point.z;
+      }
+		}
+    x_v = x_v / point_counter;
+    y_v = y_v / point_counter;
+    z_v = z_v / point_counter;
+    std::cout << "[x_v, y_v, z_v, z_max, z_min] = [" << x_v << ", " << y_v << ", " << z_v << ", " << z_max << ", " << z_min << "]" << std::endl;
+
 		scene_cloud_->header.frame_id = camera_frame;
     // scene_cloud_->width = scene_cloud_->size();
 		// scene_cloud_->height = 1;
