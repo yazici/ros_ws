@@ -86,6 +86,7 @@ public:
     x_v = x_v / point_counter;
     y_v = y_v / point_counter;
     z_v = z_v / point_counter;
+		std::cout << "There are total " << point_counter << " none empty points.";
     std::cout << "[x_v, y_v, z_v, z_max, z_min] = [" << x_v << ", " << y_v << ", " << z_v << ", " << z_max << ", " << z_min << "]" << std::endl;
 
 		scene_cloud_->header.frame_id = camera_frame;
