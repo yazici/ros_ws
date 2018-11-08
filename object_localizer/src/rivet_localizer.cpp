@@ -505,9 +505,17 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	getInverseMatrix ( transform_total, transform_total_inverse );
 	double roll, pitch, yaw;
 	get_rpy_from_matrix ( transform_total_inverse.block< 3, 3 >( 0, 0 ), roll, pitch, yaw );
-	if ( roll < 0.0 )
+	while ( roll < 0.0 )
 	{
 		roll = 3.1415926 + roll;
+	}
+	if ( roll > 0 && roll <= 3.1415926/2 )
+	{
+		roll = roll + 3.1415926;
+	}
+	if ( roll > 3.1415926/2.0 && roll <= 3.1415926/4.0*3.0 )
+	{
+		roll = roll + 3.1415926/2;
 	}
 	std::cout << "transform_total_inverse = \n" << transform_total_inverse << std::endl;
 	std::cout << "roll, pitch, yaw = \n" << roll << ", " << pitch << ", " << yaw << std::endl;
