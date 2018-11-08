@@ -45,9 +45,18 @@ void move_camera ()
       if ( success )
       {
         std::cout << "move to: " << joint_group_positions [ 3 ] << std::endl;
-        move_group.setMaxVelocityScalingFactor ( 0.01 );
-        move_group.setMaxAccelerationScalingFactor ( 0.01 );
-        move_group.move ();
+        if ( motion_stage_idx == 0 )
+        {
+          move_group.setMaxVelocityScalingFactor ( 0.01 );
+          move_group.setMaxAccelerationScalingFactor ( 0.01 );
+          move_group.move ();
+        }
+        if ( motion_stage_idx == 1 )
+        {
+          move_group.setMaxVelocityScalingFactor ( 0.1 );
+          move_group.setMaxAccelerationScalingFactor ( 0.1 );
+          move_group.move ();
+        }
       }
       motion_stage_idx ++;
     }
