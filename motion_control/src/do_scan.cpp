@@ -49,8 +49,8 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
 
   if ( success )
   {
-    move_group.setMaxVelocityScalingFactor ( 0.05 );
-    move_group.setMaxAccelerationScalingFactor ( 0.05 );
+    move_group.setMaxVelocityScalingFactor ( 0.1 );
+    move_group.setMaxAccelerationScalingFactor ( 0.1 );
     move_group.move ();
 
     // start scanning the part
@@ -66,7 +66,26 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     target_pose2.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
     // just do one way of scanning
     waypoints.push_back ( target_pose2 );
-    // waypoints.push_back ( target_pose1 );
+
+    geometry_msgs::Pose target_pose3 = target_pose2;
+    target_pose3.position.x = end_point [ 0 ] + 0.01;
+    target_pose3.position.y = end_point [ 1 ];
+    target_pose3.position.z = end_point [ 2 ];
+    rollt = rotation_deg * M_PI / 180.0;
+    pitcht = 0;
+    yawt = 0;
+    target_pose3.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    waypoints.push_back ( target_pose3 );
+
+    geometry_msgs::Pose target_pose4 = target_pose1;
+    target_pose4.position.x = start_point [ 0 ] + 0.01;
+    target_pose4.position.y = start_point [ 1 ];
+    target_pose4.position.z = start_point [ 2 ];
+    rollt = rotation_deg * M_PI / 180.0;
+    pitcht = 0;
+    yawt = 0;
+    target_pose4.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    waypoints.push_back ( target_pose4 );
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
@@ -77,7 +96,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     if ( fraction > 0.99 )
     {
       // scale the velocity and the acceleration of the trajectory
-      const double scale_factor = 0.02;
+      const double scale_factor = 0.04;
       int point_size = trajectory.joint_trajectory.points.size ();
       for ( int point_idx = 0; point_idx < point_size; point_idx++ )
       {
@@ -124,7 +143,10 @@ public:
 
 void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
 {
-  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan.cfg";;
+  ros::NodeHandle nh_p_ ( "~" );
+  std::string scanFileName;
+  nh_p_.getParam ( "scan_file", scanFileName );
+  std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/" + scanFileName;
   std::cout << "***The path of the do_scan configuration file is: [" << cfgFileName << "]" << std::endl;
 
   double rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e;
@@ -150,6 +172,8 @@ bool start_do_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& r
   CfgFileReader ( scan_plan_vector );
   // std::cout << "Choose a scanning plan using the scan_plan_idx:" << std::endl;
   int scan_plan_idx = 1;
+  ros::NodeHandle nh_p_ ( "~" );
+  nh_p_.getParam ( "scan_idx", scan_plan_idx );
   // std::cin >> scan_plan_idx;
   ScanPlan scan_plan = scan_plan_vector [ scan_plan_idx ];
   do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
