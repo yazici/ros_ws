@@ -136,7 +136,7 @@ void move_trajectory ( geometry_msgs::Pose& target_pose1, geometry_msgs::Pose& t
   if ( fraction > 0.98 )
   {
     // scale the velocity and acceleration of the trajectory
-    const double scale_factor = 0.15;
+    const double scale_factor = 0.5;
     int point_size = trajectory.joint_trajectory.points.size();
     for ( int point_idx = 0; point_idx < point_size; point_idx++ )
     {
@@ -194,10 +194,10 @@ void do_point_rivet ()
 
     if ( success )
     {
-      move_group.setMaxVelocityScalingFactor ( 0.05 );
-      move_group.setMaxAccelerationScalingFactor ( 0.05 );
+      move_group.setMaxVelocityScalingFactor ( 0.1 );
+      move_group.setMaxAccelerationScalingFactor ( 0.1 );
       move_group.move ();
-      ros::Duration ( 1.0 ) .sleep ();
+      ros::Duration ( 0.5 ) .sleep ();
 
       // start the screwing part
       while ( !target_queue.empty () )
@@ -229,7 +229,7 @@ void do_point_rivet ()
           target_pose1 = target_pose2;
         }
       }
-      ros::Duration ( 1.0 ) .sleep ();
+      //ros::Duration ( 1.0 ) .sleep ();
     }
   }
 }
