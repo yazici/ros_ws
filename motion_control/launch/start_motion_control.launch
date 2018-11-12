@@ -14,7 +14,7 @@
   </node>
 
   <!-- start the node "rough_localizer" which provides the services "start_rough_localizer" and "start_rough_localizer" -->
-  <node name="rough_localizer" pkg="object_localizer" type="rough_localizer" respawn="true" output="screen">
+  <node name="rough_localizer" pkg="object_localizer" type="rough_localizer_b" respawn="true" output="screen">
   </node>
 
   <!-- start the node "box_segmenter" which provides the services "start_box_segmenter" and "stop_box_segmenter" -->
@@ -31,8 +31,8 @@
 
   <!-- start the node "do_scan" which provides the service "start_do_scan" -->
   <node name="do_scan" pkg="motion_control" type="do_scan" respawn="true" output="screen">
-      <param name="scan_file" type="str" value="do_scan_0.cfg"/>
-      <param name="scan_idx" type="int" value="2"/>
+      <param name="scan_file" type="str" value="do_scan.cfg"/>
+      <param name="scan_idx" type="int" value="1"/>
   </node>
 
   <!-- start the node "profile_merger" which provides the service "start_profile_merger" and "stop_profile_merger" -->
