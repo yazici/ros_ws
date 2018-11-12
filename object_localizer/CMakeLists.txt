@@ -49,6 +49,10 @@ add_executable(rough_localizer src/rough_localizer.cpp)
 add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(rough_localizer_b src/rough_localizer_b.cpp)
+add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
+target_link_libraries(rough_localizer_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(box_segmenter src/box_segmenter.cpp)
 add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
 target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
