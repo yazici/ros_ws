@@ -98,9 +98,11 @@ public:
     // step 0, update the table position
     std::cout << "0, update the table position" << std::endl;
     stop_fix_table_position_.call ( msg );
-    std::cout << "\tContinue with current position (y/n): ";
+    ros::Duration ( 2.0 ) .sleep ();
+    // std::cout << "\tContinue with current position (y/n): ";
     std::string answer_str;
-    std::cin >> answer_str;
+    answer_str = "Y";
+    // std::cin >> answer_str;
     if ( answer_str == "n" )
     {
       return;
@@ -155,7 +157,7 @@ public:
       }
     }
   }
-  
+
 };
 
 int main ( int argc, char** argv )
