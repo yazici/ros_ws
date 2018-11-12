@@ -39,7 +39,7 @@ typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
 float scan_offset = 0.10;
-float scan_distance = 0.08;
+float scan_distance = 0.10;
 
 int filter_mean_k = 40;
 float filter_stddev = 1.0;
@@ -254,7 +254,7 @@ float get_central_point ( PointCloudT::Ptr segment_cloud, Eigen::Vector3f& centr
   PointT minPt_2, maxPt_2;
   minPt_2.x = minPt_2.y = minPt_2.z = 0;
   maxPt_2.x = maxPt_2.y = maxPt_2.z = 0;
-  radius = 0.01;
+  radius = 0.025;
   if ( kdtree.radiusSearch ( maxPt, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
   {
     for ( size_t i = 0; i < pointIdxRadiusSearch.size (); ++i )
@@ -293,12 +293,13 @@ class ScanPlanner
 {
 public:
 
-  void segment_list_cb ( const object_localizer_msg::Segment_list::ConstPtr& segment_list_in )
+  void segment_list_cb ( const object_localizer_msg::BBox_list::ConstPtr& segment_list_in )
   {
     if ( segment_list_in->BBox_list_float.size() > 0 )
     {
       segment_list.reset ( new object_localizer_msg::Segment_list () );
       int bbox_idx = 0;
+			std::cout << "BBox_list_float.size = " << segment_list_in->BBox_list_float.size() << " Segment_list.size = " << segment_list_in->Segment_list.size() << std::endl;
       for ( object_localizer_msg::BBox_float bbox : segment_list_in->BBox_list_float )
       {
         segment_list->BBox_list_float.push_back ( bbox );
@@ -342,15 +343,15 @@ public:
           float z_0 = central_point ( 2 );
 
           float theta_tmp = ( theta - 90.0 ) * M_PI / 180.0;
-          float x_tmp = x_0;
+          float x_tmp = x_0 + 0.008;
           float y_tmp = y_0 + scan_offset * std::sin ( theta_tmp );
           float z_tmp = z_0 - scan_offset * std::cos ( theta_tmp );
           float x_s = x_tmp;
-          float y_s = y_tmp - scan_distance * std::cos ( theta_tmp );
-          float z_s = z_tmp - scan_distance * std::sin ( theta_tmp );
+          float y_s = y_tmp - scan_distance / 2.9 * std::cos ( theta_tmp );
+          float z_s = z_tmp - scan_distance / 2.9 * std::sin ( theta_tmp );
           float x_e = x_tmp;
-          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp );
-          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp );
+          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * 1.15;
+          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * 1.15;
 
           // step 4, write scanning plannings.
           std::cout << std::endl << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;
@@ -371,7 +372,7 @@ public:
     start_scan_planner_ = nh_.advertiseService ( "start_scan_planner", &ScanPlanner::start_scan_planner, this );
     ros::Duration ( 0.5 ) .sleep ();
 
-    std::string segment_list_in_name = "/box_segmenter/segment_list";
+    std::string segment_list_in_name = "/rough_localizer/bbox_list";
     segment_list_sub_ = nh_.subscribe ( segment_list_in_name, 10, &ScanPlanner::segment_list_cb, this );
     ROS_INFO_STREAM ( "Listening for segment list on topic: " << segment_list_in_name );
 
