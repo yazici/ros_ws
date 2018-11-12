@@ -68,7 +68,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     waypoints.push_back ( target_pose2 );
 
     geometry_msgs::Pose target_pose3 = target_pose2;
-    target_pose3.position.x = end_point [ 0 ] + 0.01;
+    target_pose3.position.x = end_point [ 0 ] + 0.012;
     target_pose3.position.y = end_point [ 1 ];
     target_pose3.position.z = end_point [ 2 ];
     rollt = rotation_deg * M_PI / 180.0;
@@ -78,7 +78,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     waypoints.push_back ( target_pose3 );
 
     geometry_msgs::Pose target_pose4 = target_pose1;
-    target_pose4.position.x = start_point [ 0 ] + 0.01;
+    target_pose4.position.x = start_point [ 0 ] + 0.012;
     target_pose4.position.y = start_point [ 1 ];
     target_pose4.position.z = start_point [ 2 ];
     rollt = rotation_deg * M_PI / 180.0;
@@ -96,7 +96,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     if ( fraction > 0.99 )
     {
       // scale the velocity and the acceleration of the trajectory
-      const double scale_factor = 0.04;
+      const double scale_factor = 0.03;
       int point_size = trajectory.joint_trajectory.points.size ();
       for ( int point_idx = 0; point_idx < point_size; point_idx++ )
       {
@@ -141,6 +141,11 @@ public:
   }
 };
 
+int first_idx = -1;
+float first_max = 0.0;
+int second_idx = -1;
+float second_max = 0.0;
+
 void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
 {
   ros::NodeHandle nh_p_ ( "~" );
@@ -160,6 +165,13 @@ void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
     ScanPlan scan_plan ( rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e );
     scan_plan_vector.push_back ( scan_plan );
     std::cout << "*** scan_plan_idx = [" << scan_plan_idx << "] : [rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e] = [" << rotation_deg << ", " << x_s << ", " << y_s << ", " << z_s << ", " << x_e << ", " << y_e << ", " << z_e << "]" << std::endl;
+    if ( first_max < rotation_deg )
+    {
+      second_max = first_max;
+      second_idx = first_idx;
+      first_max = rotation_deg;
+      first_idx = scan_plan_idx;
+    }
     scan_plan_idx ++;
   }
   input.close();
@@ -175,8 +187,15 @@ bool start_do_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& r
   ros::NodeHandle nh_p_ ( "~" );
   nh_p_.getParam ( "scan_idx", scan_plan_idx );
   // std::cin >> scan_plan_idx;
-  ScanPlan scan_plan = scan_plan_vector [ scan_plan_idx ];
-  do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
+  if ( scan_plan_idx == 1 && first_idx != -1 )
+  {
+    ScanPlan scan_plan = scan_plan_vector [ first_idx ];
+    do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
+  } else if ( scan_plan_idx == 2 && second_idx != -1 )
+  {
+    ScanPlan scan_plan = scan_plan_vector [ second_idx ];
+    do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
+  }
   return true;
 }
 
