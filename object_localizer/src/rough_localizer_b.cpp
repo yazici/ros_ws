@@ -35,7 +35,7 @@ namespace bg = boost::geometry;
 typedef bg::model::point<double, 2, bg::cs::cartesian> point_t_b;
 typedef bg::model::box<point_t_b> box_t_b;
 
-typedef pcl::PointXYZ PointT;
+typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
 std::string reference_frame = "world";
@@ -44,7 +44,7 @@ std::string camera_frame = "camera_depth_optical_frame";
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 {
 	// std::printf( "Downsampling point clouds...\n" );
-  static pcl::VoxelGrid<pcl::PointXYZ> grid;
+  static pcl::VoxelGrid<pcl::PointXYZRGB> grid;
   grid.setInputCloud ( cloud );
   grid.setLeafSize ( 0.005f, 0.005f, 0.005f );
   grid.filter ( *cloud_sampled );
@@ -95,7 +95,7 @@ public:
       bbox.y2 = max_y;
       bbox_list_msg->BBox_list_float.push_back( bbox );
     }
-    for ( pcl::PointCloud<pcl::PointXYZ>::Ptr segment_cloud : segment_list )
+    for ( pcl::PointCloud<pcl::PointXYZRGB>::Ptr segment_cloud : segment_list )
     {
       pcl::PCLPointCloud2 segment_cloud_pc2;
       pcl::toPCLPointCloud2 ( *segment_cloud, segment_cloud_pc2 );
@@ -115,7 +115,7 @@ public:
     }
   }
 
-  void handle_box_tb ( box_t_b& box_n, pcl::PointCloud<pcl::PointXYZ>::Ptr box_cloud )
+  void handle_box_tb ( box_t_b& box_n, pcl::PointCloud<pcl::PointXYZRGB>::Ptr box_cloud )
   {
     if ( box_t_b_list.size() == 0 )
     {
@@ -166,7 +166,7 @@ public:
             double min_y = box_intersection.min_corner().get<1>();
             double max_x = box_intersection.max_corner().get<0>();
             double max_y = box_intersection.max_corner().get<1>();
-            pcl::PointCloud<pcl::PointXYZ>::Ptr box_cloud_intersection ( new PointCloudT );
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr box_cloud_intersection ( new PointCloudT );
             int point_counter = 0;
             for ( size_t i = 0; i < box_cloud->points.size (); ++i )
             {
@@ -201,7 +201,7 @@ public:
       return;
     }
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud ( new PointCloudT );
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cropped_cloud ( new PointCloudT );
     if ( bbox_list->BBox_list_int.size() > 0 )
     {
       // ros::Duration time_diff = sample_time - bbox_list->header.stamp;
@@ -217,7 +217,7 @@ public:
 
         for ( object_localizer_msg::BBox_int bbox : bbox_list->BBox_list_int )
         {
-          pcl::PointCloud<pcl::PointXYZ>::Ptr box_cloud ( new PointCloudT );
+          pcl::PointCloud<pcl::PointXYZRGB>::Ptr box_cloud ( new PointCloudT );
           int box_point_counter = 0;
           float box_min_x = 1000;
           float box_max_x = -1000;
@@ -314,7 +314,7 @@ public:
     return true;
   }
 
-  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZ > )
+  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZRGB > )
   {
     is_publish_ = false;
     start_rough_localizer_ = nh_.advertiseService ( "start_rough_localizer", &RoughLocalizer::start_rough_localizer, this );
@@ -326,7 +326,7 @@ public:
     ROS_INFO_STREAM ( "Listening for point cloud on topic: " << cloud_in_name );
 
     std::string cloud_out_name = "/rough_localizer/points";
-    cloud_pub_ = nh_.advertise < pcl::PointCloud < pcl::PointXYZ > > ( cloud_out_name, 30 );
+    cloud_pub_ = nh_.advertise < pcl::PointCloud < pcl::PointXYZRGB > > ( cloud_out_name, 30 );
     ROS_INFO_STREAM ( "Publishing point cloud on topic: " << cloud_out_name );
 
     std::string bbox_in_name = "/object_localizer/bbox_list";
@@ -344,7 +344,7 @@ public:
 private:
   ros::NodeHandle nh_;
   tf::TransformListener tf_listener;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr saved_cloud;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr saved_cloud;
   bool is_publish_;
   ros::ServiceServer start_rough_localizer_, stop_rough_localizer_;
   ros::Subscriber cloud_sub_;
@@ -353,7 +353,7 @@ private:
   ros::Publisher bbox_pub_;
   ros::Time sample_time;
   std::vector < box_t_b > box_t_b_list;
-  std::vector < pcl::PointCloud < pcl::PointXYZ > ::Ptr > segment_list;
+  std::vector < pcl::PointCloud < pcl::PointXYZRGB > ::Ptr > segment_list;
 };
 
 int main ( int argc, char** argv )

@@ -35,7 +35,7 @@ namespace bg = boost::geometry;
 typedef bg::model::point<double, 2, bg::cs::cartesian> point_t_b;
 typedef bg::model::box<point_t_b> box_t_b;
 
-typedef pcl::PointXYZ PointT;
+typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
 std::string reference_frame = "world";
@@ -44,7 +44,7 @@ std::string camera_frame = "camera_depth_optical_frame";
 void downSampling ( PointCloudT::Ptr cloud, PointCloudT::Ptr cloud_sampled )
 {
 	// std::printf( "Downsampling point clouds...\n" );
-  static pcl::VoxelGrid<pcl::PointXYZ> grid;
+  static pcl::VoxelGrid<pcl::PointXYZRGB> grid;
   grid.setInputCloud ( cloud );
   grid.setLeafSize ( 0.005f, 0.005f, 0.005f );
   grid.filter ( *cloud_sampled );
@@ -169,7 +169,7 @@ public:
       return;
     }
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud ( new PointCloudT );
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cropped_cloud ( new PointCloudT );
     if ( bbox_list->BBox_list_int.size() > 0 )
     {
       ros::Duration time_diff = sample_time - bbox_list->header.stamp;
@@ -271,7 +271,7 @@ public:
     return true;
   }
 
-  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZ > )
+  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZRGB > )
   {
     is_publish_ = false;
     start_rough_localizer_ = nh_.advertiseService ( "start_rough_localizer", &RoughLocalizer::start_rough_localizer, this );
@@ -283,7 +283,7 @@ public:
     ROS_INFO_STREAM ( "Listening for point cloud on topic: " << cloud_in_name );
 
     std::string cloud_out_name = "/rough_localizer/points";
-    cloud_pub_ = nh_.advertise < pcl::PointCloud < pcl::PointXYZ > > ( cloud_out_name, 30 );
+    cloud_pub_ = nh_.advertise < pcl::PointCloud < pcl::PointXYZRGB > > ( cloud_out_name, 30 );
     ROS_INFO_STREAM ( "Publishing point cloud on topic: " << cloud_out_name );
 
     std::string bbox_in_name = "/object_localizer/bbox_list";
@@ -301,7 +301,7 @@ public:
 private:
   ros::NodeHandle nh_;
   tf::TransformListener tf_listener;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr saved_cloud;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr saved_cloud;
   bool is_publish_;
   ros::ServiceServer start_rough_localizer_, stop_rough_localizer_;
   ros::Subscriber cloud_sub_;
