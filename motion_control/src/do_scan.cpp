@@ -1,5 +1,6 @@
 #include <cmath>
 #include <vector>
+#include <algorithm>
 #include <iostream>
 #include <string>
 
@@ -128,7 +129,9 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
 class ScanPlan
 {
 public:
+
   float rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e;
+
   ScanPlan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, float y_e, float z_e )
   {
     this->rotation_deg = rotation_deg;
@@ -139,12 +142,13 @@ public:
     this->y_e = y_e;
     this->z_e = z_e;
   }
+
 };
 
-int first_idx = -1;
-float first_max = 0.0;
-int second_idx = -1;
-float second_max = 0.0;
+bool scanPlanComp ( ScanPlan i,ScanPlan j )
+{
+  return ( i.rotation_deg > j.rotation_deg );
+}
 
 void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
 {
@@ -164,14 +168,7 @@ void CfgFileReader ( std::vector< ScanPlan >& scan_plan_vector )
     iss >> rotation_deg >> x_s >> y_s >> z_s >> x_e >> y_e >> z_e;
     ScanPlan scan_plan ( rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e );
     scan_plan_vector.push_back ( scan_plan );
-    std::cout << "*** scan_plan_idx = [" << scan_plan_idx << "] : [rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e] = [" << rotation_deg << ", " << x_s << ", " << y_s << ", " << z_s << ", " << x_e << ", " << y_e << ", " << z_e << "]" << std::endl;
-    if ( first_max < rotation_deg )
-    {
-      second_max = first_max;
-      second_idx = first_idx;
-      first_max = rotation_deg;
-      first_idx = scan_plan_idx;
-    }
+    // std::cout << "*** scan_plan_idx = [" << scan_plan_idx << "] : [rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e] = [" << rotation_deg << ", " << x_s << ", " << y_s << ", " << z_s << ", " << x_e << ", " << y_e << ", " << z_e << "]" << std::endl;
     scan_plan_idx ++;
   }
   input.close();
@@ -186,14 +183,19 @@ bool start_do_scan ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& r
   int scan_plan_idx = 1;
   ros::NodeHandle nh_p_ ( "~" );
   nh_p_.getParam ( "scan_idx", scan_plan_idx );
-  // std::cin >> scan_plan_idx;
-  if ( scan_plan_idx == 1 && first_idx != -1 )
+  std::sort ( scan_plan_vector.begin(), scan_plan_vector.end(), scanPlanComp );
+  for ( int i = 0; i < scan_plan_vector.size(); i++ )
   {
-    ScanPlan scan_plan = scan_plan_vector [ first_idx ];
+    ScanPlan scan_plan = scan_plan_vector [ i ];
+    std::cout << "*** scan_plan_idx = [" << i << "] : [rotation_deg, x_s, y_s, z_s, x_e, y_e, z_e] = [" << scan_plan.rotation_deg << ", " << scan_plan.x_s << ", " << scan_plan.y_s << ", " << scan_plan.z_s << ", " << scan_plan.x_e << ", " << scan_plan.y_e << ", " << scan_plan.z_e << "]" << std::endl;
+  }
+  if ( scan_plan_idx == 1 && scan_plan_vector.size() >= 1 )
+  {
+    ScanPlan scan_plan = scan_plan_vector [ 0 ];
     do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
-  } else if ( scan_plan_idx == 2 && second_idx != -1 )
+  } else if ( scan_plan_idx == 2 && scan_plan_vector.size() >= 2 )
   {
-    ScanPlan scan_plan = scan_plan_vector [ second_idx ];
+    ScanPlan scan_plan = scan_plan_vector [ 1 ];
     do_scan ( scan_plan.rotation_deg, scan_plan.x_s, scan_plan.y_s, scan_plan.z_s, scan_plan.x_e, scan_plan.y_e, scan_plan.z_e );
   }
   return true;
