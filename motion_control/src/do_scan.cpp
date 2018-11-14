@@ -50,8 +50,8 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
 
   if ( success )
   {
-    move_group.setMaxVelocityScalingFactor ( 0.1 );
-    move_group.setMaxAccelerationScalingFactor ( 0.1 );
+    move_group.setMaxVelocityScalingFactor ( 0.3 );
+    move_group.setMaxAccelerationScalingFactor ( 0.3 );
     move_group.move ();
 
     // start scanning the part
@@ -97,7 +97,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     if ( fraction > 0.99 )
     {
       // scale the velocity and the acceleration of the trajectory
-      const double scale_factor = 0.03;
+      const double scale_factor = 0.04;
       int point_size = trajectory.joint_trajectory.points.size ();
       for ( int point_idx = 0; point_idx < point_size; point_idx++ )
       {

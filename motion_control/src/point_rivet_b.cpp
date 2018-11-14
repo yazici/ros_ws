@@ -194,8 +194,8 @@ void do_point_rivet ()
 
     if ( success )
     {
-      move_group.setMaxVelocityScalingFactor ( 0.1 );
-      move_group.setMaxAccelerationScalingFactor ( 0.1 );
+      move_group.setMaxVelocityScalingFactor ( 0.3 );
+      move_group.setMaxAccelerationScalingFactor ( 0.3 );
       move_group.move ();
       ros::Duration ( 0.5 ) .sleep ();
 
