@@ -13,7 +13,7 @@
   <node name="pcl_merger" pkg="object_localizer" type="pcl_merger" respawn="true" output="screen">
   </node>
 
-  <!-- start the node "rough_localizer" which provides the services "start_rough_localizer" and "start_rough_localizer" -->
+  <!-- start the node "rough_localizer_b" which provides the services "start_rough_localizer" and "start_rough_localizer" -->
   <node name="rough_localizer" pkg="object_localizer" type="rough_localizer_b" respawn="true" output="screen">
   </node>
 
@@ -46,11 +46,6 @@
   <!-- start the node "rivet_localizer" which provides the service "start_rivet_localizer" -->
   <node name="rivet_localizer" pkg="object_localizer" type="rivet_localizer" respawn="true" output="screen">
   </node>
-
-  <!-- start the node "point_rivet" which provides the service "start_point_rivet"
-  <node name="point_rivet" pkg="motion_control" type="point_rivet" respawn="true" output="screen">
-  </node>
-  -->
 
   <!-- start the node "point_rivet_b" which provides the service "start_point_rivet" -->
   <node name="point_rivet_b" pkg="motion_control" type="point_rivet_b" respawn="true" output="screen">
