@@ -350,8 +350,8 @@ public:
           float y_s = y_tmp - scan_distance / 2.8 * std::cos ( theta_tmp );
           float z_s = z_tmp - scan_distance / 2.8 * std::sin ( theta_tmp );
           float x_e = x_tmp;
-          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * 1.0;
-          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * 1.0;
+          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * 0.8;
+          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * 0.8;
 
           // step 4, write scanning plannings.
           std::cout << std::endl << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;
