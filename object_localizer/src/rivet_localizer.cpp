@@ -539,6 +539,10 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
 		point_rivet_fs << rivet_counter << " " << rivet_point_in_final ( 0 ) << " " << rivet_point_in_final ( 1 ) << " " << rivet_point_in_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
 		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
+		if ( rivet_counter == 9 )
+		{
+			break;
+		}
 		rivet_counter ++;
 	}
 	point_rivet_fs.close();
