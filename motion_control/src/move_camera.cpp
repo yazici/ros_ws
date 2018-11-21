@@ -33,7 +33,7 @@ void move_camera ()
       if ( motion_stage_idx  == 0 )
       {
         // set pose 3 in radians
-        joint_group_positions [ 3 ] = -0.069;
+        joint_group_positions [ 3 ] = -0.200;
       } else if ( motion_stage_idx  == 1 )
       {
         // set pose 2 in radians
