@@ -34,7 +34,7 @@
         <joint name="ur10_elbow_joint" value="-2.3" />
         <joint name="ur10_shoulder_lift_joint" value="-0.5224" />
         <joint name="ur10_shoulder_pan_joint" value="0" />
-        <joint name="ur10_wrist_1_joint" value="-1.7834" />
+        <joint name="ur10_wrist_1_joint" value="-1.57075" />
         <joint name="ur10_wrist_2_joint" value="1.588" />
         <joint name="ur10_wrist_3_joint" value="0" />
     </group_state>
@@ -50,7 +50,7 @@
         <joint name="ur10_elbow_joint" value="-2.3" />
         <joint name="ur10_shoulder_lift_joint" value="-0.5224" />
         <joint name="ur10_shoulder_pan_joint" value="0" />
-        <joint name="ur10_wrist_1_joint" value="-0.069" />
+        <joint name="ur10_wrist_1_joint" value="-0.200" />
         <joint name="ur10_wrist_2_joint" value="1.588" />
         <joint name="ur10_wrist_3_joint" value="0" />
     </group_state>
