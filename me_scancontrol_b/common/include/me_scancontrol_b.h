@@ -40,7 +40,8 @@ namespace microepsilon_scancontrol
     std::string path_to_device_properties_;
 
     // LLT llt_;
-    std::shared_ptr<CInterfaceLLT> hLLT;
+    std::shared_ptr < CInterfaceLLT > hLLT;
+    TScannerType m_tscanCONTROLType;
     Notifyee* notifyee_;
 
     bool connect();

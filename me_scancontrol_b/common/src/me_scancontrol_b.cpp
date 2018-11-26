@@ -77,7 +77,6 @@ namespace microepsilon_scancontrol
     }
 
     // print the type of microepsilon laser scanner
-    TScannerType m_tscanCONTROLType;
     if ( ( iRetValue = hLLT->GetLLTType ( &m_tscanCONTROLType ) ) < GENERAL_FUNCTION_OK )
     {
       std::cout << "Error while GetLLTType!\n";
@@ -213,12 +212,19 @@ namespace microepsilon_scancontrol
     }
 
     ScanProfileConvertedPtr profile ( new ScanProfileConverted );
-    CInterfaceLLT::Timestamp2TimeAndCount ( &profile_buffer_[0], &( profile->shutter_open ), &( profile->shutter_close ), &( profile->profile_counter ) );
+    CInterfaceLLT::Timestamp2TimeAndCount ( &profile_buffer_[0], &( profile->shutter_open ), &( profile->shutter_close ), &( profile->profile_counter ), NULL );
     // show the time information of the input profile
     // std::cout <<"[profile_counter, shutter_open, shutter_close] = [" << profile->profile_counter << ", " << profile->shutter_open << ", " << profile->shutter_close << "]" << std::endl;
     profile->x.resize ( SCANNER_RESOLUTION );
     profile->z.resize ( SCANNER_RESOLUTION );
-    CInterfaceLLT::ConvertProfile2Values ( &profile_buffer_[0], profile_buffer_.size(), SCANNER_RESOLUTION, 0, NULL, NULL, NULL, &( profile->x[0] ), &( profile->z[0] ), NULL, NULL );
+    // CInterfaceLLT::ConvertProfile2Values ( &profile_buffer_[0], profile_buffer_.size(), SCANNER_RESOLUTION, 0, NULL, NULL, NULL, &( profile->x[0] ), &( profile->z[0] ), NULL, NULL );
+
+    gint32 ret = 0;
+    if ( ( ret = CInterfaceLLT::ConvertProfile2Values ( &profile_buffer_[0], profile_buffer_.size(), SCANNER_RESOLUTION, PROFILE, m_tscanCONTROLType, 0,
+                                                        NULL, NULL, NULL, &( profile->x[0] ), &( profile->z[0] ), NULL, NULL ) ) != ( CONVERT_X | CONVERT_Z ) )
+    {
+        std::cout << "Error while extracting profiles" << std::endl;
+    }
 
     // publish the new profile
     notifyee_->notify( profile );
