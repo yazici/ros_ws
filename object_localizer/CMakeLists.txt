@@ -46,19 +46,19 @@ add_executable(pc_writer src/pc_writer.cpp)
 target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(rough_localizer src/rough_localizer.cpp)
-add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
+add_dependencies( rough_localizer ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(rough_localizer_b src/rough_localizer_b.cpp)
-add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
+add_dependencies( rough_localizer_b ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(rough_localizer_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(box_segmenter src/box_segmenter.cpp)
-add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
+add_dependencies( box_segmenter ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(scan_planner src/scan_planner.cpp)
-add_dependencies( pcl_merger object_localizer_msg_generate_messages_cpp )
+add_dependencies( scan_planner ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(scan_planner ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(rivet_localizer src/rivet_localizer.cpp)
