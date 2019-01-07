@@ -34,7 +34,7 @@ threshold = 0.95
 import rospkg
 
 rospack = rospkg.RosPack()
-PATH_TO_CKPT = rospack.get_path('object_localizer') + '/model/frozen_inference_graph.pb'
+PATH_TO_CKPT = rospack.get_path('object_localizer') + '/model/model_2/frozen_inference_graph.pb'
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
@@ -45,12 +45,12 @@ with detection_graph.as_default():
 print( '***load saved graph from: ', PATH_TO_CKPT )
 
 # list of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = rospack.get_path('object_localizer') + '/model/object_map.pbtxt'
-NUM_CLASSES = 1
+PATH_TO_LABELS = rospack.get_path('object_localizer') + '/model/model_2/object_map.pbtxt'
+NUM_CLASSES = 2
 label_map = label_map_util.load_labelmap( PATH_TO_LABELS )
 categories = label_map_util.convert_label_map_to_categories( label_map, max_num_classes = NUM_CLASSES, use_display_name = True )
 category_index = label_map_util.create_category_index( categories )
-print( '***load category_index [', type( category_index ), ']:', category_index )
+print( '***load category_index :', category_index )
 #######################################################################################################
 # create a tensorflow session for detection_graph
 sess = tf.Session( graph = detection_graph )
