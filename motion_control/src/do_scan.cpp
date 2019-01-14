@@ -69,7 +69,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     waypoints.push_back ( target_pose2 );
 
     geometry_msgs::Pose target_pose3 = target_pose2;
-    target_pose3.position.x = end_point [ 0 ] + 0.012;
+    target_pose3.position.x = end_point [ 0 ];
     target_pose3.position.y = end_point [ 1 ];
     target_pose3.position.z = end_point [ 2 ];
     rollt = rotation_deg * M_PI / 180.0;
@@ -79,7 +79,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     waypoints.push_back ( target_pose3 );
 
     geometry_msgs::Pose target_pose4 = target_pose1;
-    target_pose4.position.x = start_point [ 0 ] + 0.012;
+    target_pose4.position.x = start_point [ 0 ];
     target_pose4.position.y = start_point [ 1 ];
     target_pose4.position.z = start_point [ 2 ];
     rollt = rotation_deg * M_PI / 180.0;
@@ -97,7 +97,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     if ( fraction > 0.99 )
     {
       // scale the velocity and the acceleration of the trajectory
-      const double scale_factor = 0.04;
+      const double scale_factor = 0.02;
       int point_size = trajectory.joint_trajectory.points.size ();
       for ( int point_idx = 0; point_idx < point_size; point_idx++ )
       {
