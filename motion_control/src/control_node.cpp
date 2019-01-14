@@ -125,7 +125,8 @@ public:
           start_move_camera_.call ( msg );
           // step 5, stop services pcl_merger, rough_localizer, and box_segmenter
           std::cout << "5, stop services pcl_merger, rough_localizer, box_segmenter" << std::endl;
-          if ( stop_pcl_merger_.call ( msg ) && stop_rough_localizer_.call ( msg ) && stop_box_segmenter_.call ( msg ) )
+          stop_pcl_merger_.call ( msg );
+          if ( stop_rough_localizer_.call ( msg ) && stop_box_segmenter_.call ( msg ) )
           {
             // step 6, generate scanning plans and write it to the configuration file [do_scan]
             std::cout << "6, start to generate scanning plans" << std::endl;
