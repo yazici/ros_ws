@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <std_srvs/Empty.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -133,6 +134,9 @@ public:
   {
     is_merge_ = false;
     // clear the scene_cloud_total point cloud and publish the empty one
+    std::string pcl_file_path = ros::package::getPath ( "object_localizer" )+ "/data/pcl_out_0.ply";
+    std::cout << "Saving point cloud to file: \n\t" << pcl_file_path << std::endl;
+    writer.write ( pcl_file_path, *scene_cloud_total );
     scene_cloud_total->clear ();
     scene_cloud_total->header.frame_id = reference_frame;
     pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
@@ -167,6 +171,8 @@ private:
   ros::ServiceServer start_pcl_merge_, end_pcl_merge_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
+
+  pcl::PLYWriter writer;
 };
 
 int main ( int argc, char** argv )
