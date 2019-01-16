@@ -39,6 +39,7 @@ float filter_stddev = 1.0;
 float scale_factor = 1.0;
 float rivet_height = 0.007; // unit meter
 float rivet_radius = 0.007; // unit meter
+bool show_viz = false;
 
 // define the union-find data structure
 class UF
@@ -548,8 +549,11 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	point_rivet_fs.close();
 
 	// step 11, show the point cloud
-  // std::printf ( "Visualizing point clouds...\n" );
-	// Visualize ( cloud_in_transformed, planar_cloud, cloud_rivet );
+	if ( show_viz )
+	{
+		// std::printf ( "Visualizing point clouds...\n" );
+		Visualize ( cloud_in_transformed, planar_cloud, cloud_rivet );
+	}
 }
 
 class RivetLocalizer
@@ -618,6 +622,14 @@ void CfgFileReader ()
 	    iss >> rivet_height >> rivet_radius;
 	    std::cout << "***rivet_height = [" << rivet_height << "] rivet_radius = [" << rivet_radius << "]" << std::endl;
 		}
+  }
+	if ( std::getline ( input, line ) )
+  {
+		if ( boost::starts_with ( line, "Yes" ) )
+		{
+			show_viz = true;
+		}
+		std::cout << "***Show Visualization = [" << show_viz << "]" << std::endl;
   }
   input.close();
 }
