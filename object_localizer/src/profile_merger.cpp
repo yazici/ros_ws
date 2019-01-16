@@ -66,8 +66,8 @@ public:
 		  {
 				if ( boost::starts_with ( ex.what(), "Lookup would require extrapolation into the future." ) )
 				{
-					// wait for 0.05 second every time
-					ros::Duration ( 0.05 ) .sleep ();
+					// wait for 0.01 second every time
+					ros::Duration ( 0.01 ) .sleep ();
 				} else
 				{
 					ROS_ERROR ( "%s", ex.what() );
@@ -163,7 +163,7 @@ public:
 		ros::Duration ( 1 ).sleep ();
 
 		std::string cloud_in_name = "/me_2900/me_2900_laser_scan";
-    cloud_sub_ = nh_.subscribe ( cloud_in_name, 100, &ProfileMerger::cloud_cb, this );
+    cloud_sub_ = nh_.subscribe ( cloud_in_name, 2000, &ProfileMerger::cloud_cb, this );
     ROS_INFO_STREAM ( "Listening point cloud message on topic " << cloud_in_name );
 
     std::string cloud_out_name = "/profile_merger/points";

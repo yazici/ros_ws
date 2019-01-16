@@ -68,25 +68,25 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
     // just do one way of scanning
     waypoints.push_back ( target_pose2 );
 
-    geometry_msgs::Pose target_pose3 = target_pose2;
-    target_pose3.position.x = end_point [ 0 ];
-    target_pose3.position.y = end_point [ 1 ];
-    target_pose3.position.z = end_point [ 2 ];
-    rollt = rotation_deg * M_PI / 180.0;
-    pitcht = 0;
-    yawt = 0;
-    target_pose3.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
-    waypoints.push_back ( target_pose3 );
-
-    geometry_msgs::Pose target_pose4 = target_pose1;
-    target_pose4.position.x = start_point [ 0 ];
-    target_pose4.position.y = start_point [ 1 ];
-    target_pose4.position.z = start_point [ 2 ];
-    rollt = rotation_deg * M_PI / 180.0;
-    pitcht = 0;
-    yawt = 0;
-    target_pose4.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
-    waypoints.push_back ( target_pose4 );
+    // geometry_msgs::Pose target_pose3 = target_pose2;
+    // target_pose3.position.x = end_point [ 0 ];
+    // target_pose3.position.y = end_point [ 1 ];
+    // target_pose3.position.z = end_point [ 2 ];
+    // rollt = rotation_deg * M_PI / 180.0;
+    // pitcht = 0;
+    // yawt = 0;
+    // target_pose3.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    // waypoints.push_back ( target_pose3 );
+    //
+    // geometry_msgs::Pose target_pose4 = target_pose1;
+    // target_pose4.position.x = start_point [ 0 ];
+    // target_pose4.position.y = start_point [ 1 ];
+    // target_pose4.position.z = start_point [ 2 ];
+    // rollt = rotation_deg * M_PI / 180.0;
+    // pitcht = 0;
+    // yawt = 0;
+    // target_pose4.orientation = tf::createQuaternionMsgFromRollPitchYaw ( rollt, pitcht, yawt );
+    // waypoints.push_back ( target_pose4 );
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
@@ -119,6 +119,7 @@ void do_scan ( float rotation_deg, float x_s, float y_s, float z_s, float x_e, f
       std_srvs::Empty msg;
       start_profile_merger_.call ( msg );
       move_group.execute ( my_plan );
+      ros::Duration ( 5.0 ) .sleep ();
       stop_profile_merger_.call ( msg );
       std::cout << "write merged profile scan" << std::endl;
       start_point_cloud_writer_.call ( msg );
