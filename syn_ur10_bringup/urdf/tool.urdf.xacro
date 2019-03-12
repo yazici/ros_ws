@@ -89,7 +89,7 @@
   <joint name="rivet_tool_part_1_rivet_tool_part_2_joint" type="fixed">
     <parent link="rivet_tool_part_1"/>
     <child link="rivet_tool_part_2"/>
-    <origin xyz="${-rivet_tool_part_2_length/2} 0 ${rivet_tool_part_1_length + rivet_tool_part_2_height/2}" rpy="0 0 0" />
+    <origin xyz="0 ${rivet_tool_part_2_length/2} ${rivet_tool_part_1_length + rivet_tool_part_2_height/2}" rpy="0 0 ${radians(-90)}" />
   </joint>
 
   <link name="rivet_tool_part_3">
@@ -127,11 +127,7 @@
     <origin xyz="0 0 ${rivet_tool_part_3_length + rivet_tool_x_offset}" rpy="${radians(-90)} ${radians(90)} 0" />
   </joint>
 
-  <!-- scanCONTROL_2900-50  sensor -->
-  <xacro:scanCONTROL_2900-50 prefix="scanCONTROL_2900-50_" parent="tool_base">
-    <origin xyz="0.0617 -0.09003 0.0870" rpy="${radians(0)} ${radians(0)} ${radians(0)}" />
-  </xacro:scanCONTROL_2900-50>
-
+  <!-- link camera_plate and link to tool_base -->
   <link name="camera_plate">
     <inertial>
       <origin xyz="0.0 0.0 0.0" />
@@ -140,13 +136,13 @@
     </inertial>
     <visual>
       <material name="lightgray" />
-      <origin xyz="0.0392 -0.0298 0.076" />
+      <origin xyz="0.0 0.0 0.0" />
       <geometry>
         <box size="0.003 0.126 0.132" />
       </geometry>
     </visual>
     <collision>
-      <origin xyz="0.0392 -0.0298 0.076" />
+      <origin xyz="0.0 0.0 0.0" />
       <geometry>
         <box size="0.003 0.126 0.132" />
       </geometry>
@@ -156,9 +152,15 @@
   <joint name="tool_base_camera_plate_joint" type="fixed">
     <parent link="tool_base"/>
     <child link="camera_plate"/>
-    <origin xyz="0 0 0" rpy="0 0 0" />
+    <origin xyz="-0.0392 0.0298 0.069" rpy="0 0 0" />
   </joint>
 
+  <!-- scanCONTROL_2900-50 sensor and is connected to tool_base frame -->
+  <xacro:scanCONTROL_2900-50 prefix="scanCONTROL_2900-50_" parent="tool_base">
+    <origin xyz="-0.060 0.09 0.078" rpy="${radians(0)} ${radians(0)} ${radians(180)}" />
+  </xacro:scanCONTROL_2900-50>
+
+  <!-- camera_support link is connected to scanCONTROL_2900-50_scanner_link -->
   <link name="camera_support">
     <inertial>
       <origin xyz="0.0 0.0 0.0" />
@@ -183,7 +185,7 @@
   <joint name="scanner_link_camera_support_joint" type="fixed">
     <parent link="scanCONTROL_2900-50_scanner_link"/>
     <child link="camera_support"/>
-    <origin xyz="0 0.0085 0.032" rpy="0.0 ${radians(90)} 0.0" />
+    <origin xyz="0 0.09 0.045" rpy="0.0 ${radians(90)} 0.0" />
   </joint>
 
   <link name="camera_support_2" />
@@ -194,6 +196,7 @@
     <origin xyz="0 0.0 0.0208" rpy="0.0 ${radians(0)} ${radians(180)}" />
   </joint>
 
+  <!-- connect camera to link camera_support_2 -->
   <xacro:include filename="$(find realsense2_camera)/urdf/_r430.urdf.xacro"/>
 
   <sensor_r430 parent="camera_support_2">
