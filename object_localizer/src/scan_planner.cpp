@@ -347,11 +347,13 @@ public:
           float y_tmp = y_0 + scan_offset * std::sin ( theta_tmp );
           float z_tmp = z_0 - scan_offset * std::cos ( theta_tmp );
           float x_s = x_tmp;
-          float y_s = y_tmp - scan_distance * std::cos ( theta_tmp ) * 0.18;
-          float z_s = z_tmp - scan_distance * std::sin ( theta_tmp ) * 0.18;
+					float s_scale = 0.25;
+          float y_s = y_tmp - scan_distance * std::cos ( theta_tmp ) * s_scale;
+          float z_s = z_tmp - scan_distance * std::sin ( theta_tmp ) * s_scale;
           float x_e = x_tmp;
-          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * 1.1;
-          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * 1.1;
+					float e_scale = 1.0;
+          float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * e_scale;
+          float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * e_scale;
 
           // step 4, write scanning plannings.
           std::cout << std::endl << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;
