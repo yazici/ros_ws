@@ -13,19 +13,19 @@ int main ( int argc, char** argv )
 
   std::cout << "Starting to publish fake tf transform from table to floor" << std::endl;
 
-  int count = 0;
+  // int count = 0;
   while ( ros::ok() )
   {
     tf::Transform transform;
-    transform.setOrigin ( tf::Vector3 ( 0.3, -0.3, 0.0 ) );
+    transform.setOrigin ( tf::Vector3 ( 0.0, 0.0, 0.0 ) );
     tf::Quaternion q;
     q.setRPY ( 0.0, 0.0, 0.0 );
     transform.setRotation ( q );
     br.sendTransform ( tf::StampedTransform ( transform, ros::Time::now(), "floor", "table") );
     ros::spinOnce ();
     loop_rate.sleep ();
-    ++count;
-    count = count % 10;
+    // ++count;
+    // count = count % 10;
   }
 
   return 0;
