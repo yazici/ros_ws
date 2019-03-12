@@ -12,17 +12,17 @@ shoulder_pan_joint:
     lower: -0.6283
     upper: 0.6283
 shoulder_lift_joint:
-    lower: -3.1415926
-    upper: 3.1415926
+    lower: -3.141592
+    upper: 3.141592
 elbow_joint:
-    lower: -3.1415926
-    upper: 3.1415926
+    lower: -3.141592
+    upper: 3.141592
 wrist_1_joint:
-    lower: -1.60075
-    upper: -0.15000
+    lower: -2.094333
+    upper: 0.000000
 wrist_2_joint:
-    lower: 1.0471667
-    upper: 2.0943333
+    lower: 1.047166
+    upper: 2.094333
 wrist_3_joint:
-    lower: -0.5235833
-    upper: 0.5235833
+    lower: -0.261791
+    upper: 3.490550
