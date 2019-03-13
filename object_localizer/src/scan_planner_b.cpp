@@ -38,8 +38,11 @@ std::string reference_frame = "world";
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
-float scan_offset = 0.10;
-float scan_distance = 0.10;
+float x_adjust = -0.015; // adjustment for the x poistion
+float scan_offset = 0.075; // distance to the scaling part
+float scan_distance = 0.10; // scanning path length
+float s_scale = 0.2; // scale of the start scaling scan_distance
+float e_scale = 1.1; // scale of the end scaling scan_distance
 
 int filter_mean_k = 40;
 float filter_stddev = 1.0;
@@ -339,15 +342,13 @@ public:
         float z_0 = central_point ( 2 );
 
         float theta_tmp = ( theta - 90.0 ) * M_PI / 180.0;
-        float x_tmp = x_0 + 0.01;
+        float x_tmp = x_0 + x_adjust;
         float y_tmp = y_0 + scan_offset * std::sin ( theta_tmp );
         float z_tmp = z_0 - scan_offset * std::cos ( theta_tmp );
         float x_s = x_tmp;
-				float s_scale = 0.25;
         float y_s = y_tmp - scan_distance * std::cos ( theta_tmp ) * s_scale;
         float z_s = z_tmp - scan_distance * std::sin ( theta_tmp ) * s_scale;
         float x_e = x_tmp;
-				float e_scale = 1.0;
         float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * e_scale;
         float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * e_scale;
 
