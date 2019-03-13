@@ -55,11 +55,20 @@ target_link_libraries(motion_control ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable(control_node src/control_node.cpp)
 target_link_libraries(control_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(control_node_b src/control_node_b.cpp)
+target_link_libraries(control_node_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(move_camera src/move_camera.cpp)
 target_link_libraries(move_camera ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(move_camera_b src/move_camera_b.cpp)
+target_link_libraries(move_camera_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(do_scan src/do_scan.cpp)
 target_link_libraries(do_scan ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(do_scan_b src/do_scan_b.cpp)
+target_link_libraries(do_scan_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(point_rivet src/point_rivet.cpp)
 target_link_libraries(point_rivet ${catkin_LIBRARIES} ${Boost_LIBRARIES})
