@@ -39,12 +39,6 @@ target_link_libraries(pcl_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable(cam_pc_processor src/cam_pc_processor.cpp)
 target_link_libraries(cam_pc_processor ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(profile_merger src/profile_merger.cpp)
-target_link_libraries(profile_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(pc_writer src/pc_writer.cpp)
-target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
 add_executable(rough_localizer src/rough_localizer.cpp)
 add_dependencies( rough_localizer ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(rough_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -57,9 +51,26 @@ add_executable(box_segmenter src/box_segmenter.cpp)
 add_dependencies( box_segmenter ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(box_segmenter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(box_segmenter_b src/box_segmenter_b.cpp)
+add_dependencies( box_segmenter_b ${catkin_EXPORTED_TARGETS} )
+target_link_libraries( box_segmenter_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(scan_planner src/scan_planner.cpp)
 add_dependencies( scan_planner ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(scan_planner ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(scan_planner_b src/scan_planner_b.cpp)
+add_dependencies( scan_planner_b ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(scan_planner_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(profile_merger src/profile_merger.cpp)
+target_link_libraries(profile_merger ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(profile_merger_b src/profile_merger_b.cpp)
+target_link_libraries(profile_merger_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(pc_writer src/pc_writer.cpp)
+target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(rivet_localizer src/rivet_localizer.cpp)
 target_link_libraries(rivet_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
