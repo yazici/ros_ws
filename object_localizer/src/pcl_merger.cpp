@@ -78,7 +78,7 @@ public:
 			temp_point.x = point_n.getX();
 			temp_point.y = point_n.getY();
 			temp_point.z = point_n.getZ();
-			cloud_out->points.push_back (temp_point);
+			cloud_out->points.push_back ( temp_point );
 		}
 	}
 
@@ -126,6 +126,12 @@ public:
 
   bool start_pcl_merge ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
+    // clear old merger point cloud
+    scene_cloud_total->clear ();
+    scene_cloud_total->header.frame_id = reference_frame;
+    pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
+    cloud_pub_.publish ( scene_cloud_total );
+    // then start to merge new point cloud
     is_merge_ = true;
     return true;
   }
@@ -134,13 +140,9 @@ public:
   {
     is_merge_ = false;
     // clear the scene_cloud_total point cloud and publish the empty one
-    std::string pcl_file_path = ros::package::getPath ( "object_localizer" )+ "/data/pcl_out_0.ply";
-    std::cout << "Saving point cloud to file: \n\t" << pcl_file_path << std::endl;
-    writer.write ( pcl_file_path, *scene_cloud_total );
-    scene_cloud_total->clear ();
-    scene_cloud_total->header.frame_id = reference_frame;
-    pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
-    cloud_pub_.publish ( scene_cloud_total );
+    // std::string pcl_file_path = ros::package::getPath ( "object_localizer" )+ "/data/pcl_out_0.ply";
+    // std::cout << "Saving point cloud to file: \n\t" << pcl_file_path << std::endl;
+    // writer.write ( pcl_file_path, *scene_cloud_total );
     return true;
   }
 
@@ -171,8 +173,7 @@ private:
   ros::ServiceServer start_pcl_merge_, end_pcl_merge_;
   ros::Subscriber cloud_sub_;
   ros::Publisher cloud_pub_;
-
-  pcl::PLYWriter writer;
+  // pcl::PLYWriter writer;
 };
 
 int main ( int argc, char** argv )
