@@ -75,5 +75,5 @@ target_link_libraries(pc_writer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable(rivet_localizer src/rivet_localizer.cpp)
 target_link_libraries(rivet_localizer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(rough_localizer_b src/rough_localizer_b.cpp)
-target_link_libraries(rough_localizer_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable(rivet_localizer_b src/rivet_localizer_b.cpp)
+target_link_libraries(rivet_localizer_b ${catkin_LIBRARIES} ${Boost_LIBRARIES})
