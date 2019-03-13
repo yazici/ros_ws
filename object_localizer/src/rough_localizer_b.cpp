@@ -301,6 +301,9 @@ public:
 
   bool start_rough_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
+    // clear up old bounding boxes
+    box_t_b_list.clear ();
+    segment_list.clear ();
     is_publish_ = true;
     return true;
   }
@@ -308,13 +311,10 @@ public:
   bool stop_rough_localizer ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
     is_publish_ = false;
-    // clear up old bounding boxes
-    box_t_b_list.clear ();
-    segment_list.clear ();
     return true;
   }
 
-  RoughLocalizer () : saved_cloud ( new pcl::PointCloud< pcl::PointXYZRGB > )
+  RoughLocalizer () : saved_cloud ( new pcl::PointCloud < pcl::PointXYZRGB > )
   {
     is_publish_ = false;
     start_rough_localizer_ = nh_.advertiseService ( "start_rough_localizer", &RoughLocalizer::start_rough_localizer, this );
@@ -344,7 +344,7 @@ public:
 private:
   ros::NodeHandle nh_;
   tf::TransformListener tf_listener;
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr saved_cloud;
+  pcl::PointCloud < pcl::PointXYZRGB > ::Ptr saved_cloud;
   bool is_publish_;
   ros::ServiceServer start_rough_localizer_, stop_rough_localizer_;
   ros::Subscriber cloud_sub_;
@@ -358,7 +358,7 @@ private:
 
 int main ( int argc, char** argv )
 {
-  ros::init ( argc, argv, "rough_localizer" );
+  ros::init ( argc, argv, "rough_localizer_b" );
   ros::AsyncSpinner spinner ( 4 );
   spinner.start ();
   RoughLocalizer RL;
