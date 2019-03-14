@@ -142,14 +142,7 @@ void Visualize ( PointCloudT::Ptr cloud_in_transformed, PointCloudT::Ptr planar_
 	while ( !viewer.wasStopped () )
   {
     viewer.spinOnce ();
-		boost::this_thread::sleep ( boost::posix_time::microseconds ( 100000 ) );
-		// std::string answer;
-		// std::cout << "stop? (y/n)" << endl;
-		// std::cin >> answer;
-		// if ( answer == "y" )
-		// {
-		// 	break;
-		// }
+		boost::this_thread::sleep ( boost::posix_time::microseconds ( 1000 ) );
 	}
 }
 
@@ -413,7 +406,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 			float y = temp_point.y;
 			float z = temp_point.z;
 			if ( y >= minPoint.y && y <= maxPoint.y && z >= minPoint.z && z <= maxPoint.z
-					 && x_compare <= 0.0005 && x > 0 )
+					 && x_compare <= 0.0008 && x > 0 )
 			{
 		    PointT new_point;
 				// sum_x += x;
@@ -531,7 +524,7 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 	{
 		Eigen::Vector4f rivet_point_final;
 		Eigen::Vector4f rivet_point_in, rivet_point_in_final;
-		rivet_point_in << -0.0028, rivet_point ( 1 ), rivet_point ( 2 ), 1.0;
+		rivet_point_in << -0.0030, rivet_point ( 1 ), rivet_point ( 2 ), 1.0;
 		rivet_point_final = transform_total_inverse * rivet_point;
 		rivet_point_in_final = transform_total_inverse * rivet_point_in;
 		rivet_vector_final.push_back ( rivet_point_final );
@@ -540,10 +533,10 @@ int find_rivet ( PointCloudT::Ptr cloud_in )
 		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
 		point_rivet_fs << rivet_counter << " " << rivet_point_in_final ( 0 ) << " " << rivet_point_in_final ( 1 ) << " " << rivet_point_in_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
 		point_rivet_fs << rivet_counter << " " << rivet_point_final ( 0 ) << " " << rivet_point_final ( 1 ) << " " << rivet_point_final ( 2 ) << " " << roll << " " << pitch << " " << yaw << std::endl;
-		if ( rivet_counter == 9 )
-		{
-			break;
-		}
+		// if ( rivet_counter == 9 )
+		// {
+		// 	break;
+		// }
 		rivet_counter ++;
 	}
 	point_rivet_fs.close();
