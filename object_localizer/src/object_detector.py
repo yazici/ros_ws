@@ -131,6 +131,7 @@ class image_converter:
         # Publish the bounding box list messages
         # Filter out bounding boxs have confidence score less than 0.99
         result_box = output_dict[ 'detection_boxes' ][ output_dict[ 'detection_scores' ] > threshold, : ]
+        detection_class_list = output_dict[ 'detection_classes' ][ output_dict[ 'detection_scores' ] > threshold ]
         xmin = result_box[:, 0]
         xmax = result_box[:, 2]
         ymin = result_box[:, 1]
@@ -149,6 +150,7 @@ class image_converter:
             new_bbox.y1 = int( y1[idx] )
             new_bbox.y2 = int( y2[idx] )
             bbox_list.BBox_list_int.append( new_bbox )
+            bbox_list.class_list.append( detection_class_list[idx] )
         self.bbox_pub.publish( bbox_list )
         ###########################################################################################
 
