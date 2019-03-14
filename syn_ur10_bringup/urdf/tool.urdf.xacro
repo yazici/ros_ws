@@ -1,21 +1,23 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tool" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tool">
 
-  <!-- change the value of rivet_tool_x_offset to adjust x offset -->
-  <xacro:property name="rivet_tool_x_offset" value="0.000" />
-  <!-- change the value of rivet_tool_y_adjust to adjust y offset -->
-  <xacro:property name="rivet_tool_y_adjust" value="0.0055" />
-  <!-- change the value of rivet_tool_z_adjust to adjust z offset -->
-  <xacro:property name="rivet_tool_z_adjust" value="0.000" />
+  <!-- change the value of rivet_tool_distance_offset to adjust the distance to the target-->
+  <xacro:property name="rivet_tool_distance_offset" value="0.0000" />
+  <!-- change the value of rivet_tool_horizontal_adjust to adjust the tool horizontally, plus for left and minus for right -->
+  <xacro:property name="rivet_tool_horizontal_adjust" value="-0.0047" />
+  <!-- change the value of rivet_tool_vertical_adjust to adjust the tool vertically, plus for up and minus for down -->
+  <xacro:property name="rivet_tool_vertical_adjust" value="-0.0015" />
 
   <xacro:include filename="$(find microepsilon_scancontrol)/description/urdf/scanCONTROL_2900-50_macro.urdf.xacro" />
-  <xacro:property name="rivet_tool_part_1_length" value="0.07015" />
+  <xacro:property name="rivet_tool_part_1_length" value="0.05078" />
   <xacro:property name="rivet_tool_part_1_radius" value="0.015" />
   <xacro:property name="rivet_tool_part_2_height" value="0.012" />
-  <xacro:property name="rivet_tool_part_2_length" value="${0.0625 - rivet_tool_y_adjust}" />
+  <xacro:property name="rivet_tool_part_2_length" value="0.066" />
   <xacro:property name="rivet_tool_part_2_width" value="0.03" />
-  <xacro:property name="rivet_tool_part_3_length" value="0.044" />
+  <xacro:property name="rivet_tool_part_3_length" value="0.06374" />
   <xacro:property name="rivet_tool_part_3_radius" value="0.0075" />
+
+  <xacro:property name="rivet_tool_angle" value="154.6" />
 
   <link name="tool_base">
     <inertial>
@@ -62,7 +64,8 @@
   <joint name="tool_base_rivet_tool_part_1_joint" type="fixed">
     <parent link="tool_base"/>
     <child link="rivet_tool_part_1"/>
-    <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_z_adjust}" rpy="${radians(90)} 0 0" />
+    <!-- <origin xyz="0 -0.03275 ${0.03787 + rivet_tool_z_adjust}" rpy="${radians(90)} 0 0" /> -->
+    <origin xyz="${0 - rivet_tool_horizontal_adjust} -0.03275 ${0.03787 - rivet_tool_vertical_adjust}" rpy="${radians(90)} ${radians(rivet_tool_angle)} 0" />
   </joint>
 
   <link name="rivet_tool_part_2">
@@ -124,7 +127,7 @@
   <joint name="rivet_tool_part_3_rivet_tool_joint" type="fixed">
     <parent link="rivet_tool_part_3"/>
     <child link="rivet_tool"/>
-    <origin xyz="0 0 ${rivet_tool_part_3_length + rivet_tool_x_offset}" rpy="${radians(-90)} ${radians(90)} 0" />
+    <origin xyz="0 0 ${rivet_tool_part_3_length + rivet_tool_distance_offset}" rpy="${radians(-90)} ${radians(90)} ${radians(90+rivet_tool_angle)}" />
   </joint>
 
   <!-- link camera_plate and link to tool_base -->
