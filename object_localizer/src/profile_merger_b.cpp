@@ -141,17 +141,14 @@ public:
 	bool start_profile_merger ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 	{
 	  is_publish_ = true;
+		// clear the profile point cloud and publish the empty one
+		scene_cloud_total->clear ();
 	  return true;
 	}
 
 	bool stop_profile_merger ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
 	{
 	  is_publish_ = false;
-		// clear the profile point cloud and publish the empty one
-		scene_cloud_total->clear ();
-		scene_cloud_total->header.frame_id = reference_frame;
-		pcl_conversions::toPCL ( ros::Time::now(), scene_cloud_total->header.stamp );
-		cloud_pub_.publish ( scene_cloud_total );
 	  return true;
 	}
 
