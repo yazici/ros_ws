@@ -30,7 +30,7 @@ void move_camera ()
   if ( std::abs ( joint_group_positions [ 3 ] + 1.8434 ) <= 0.01 && std::abs ( joint_group_positions [ 5 ] - 3.1415 ) <= 0.01 )
   {
     int motion_stage_idx = 0;
-    while ( motion_stage_idx != 2 )
+    while ( motion_stage_idx != 1 )
     {
       if ( motion_stage_idx  == 0 )
       {
