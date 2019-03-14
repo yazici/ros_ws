@@ -129,16 +129,17 @@ public:
 
   void execute_pipeline ()
   {
-    std_srvs::Empty msg;
-    std::cout << "\tContinue with current position (y/n): ";
-    std::string answer_str;
-    // answer_str = "y";
-    std::cin >> answer_str;
-    if ( answer_str == "n" )
-    {
-      return;
-    }
+    // std::cout << "\tContinue with current position (y/n): ";
+    // std::string answer_str;
+    // // answer_str = "y";
+    // std::cin >> answer_str;
+    // if ( answer_str == "n" )
+    // {
+    //   return;
+    // }
+
     // step 1, set the robot pose to pose.
+    std_srvs::Empty msg;
     std::cout << "1, set the robot pose to scan_start" << std::endl;
     if ( set_pose ( "scan_start" ) )
     {
@@ -149,10 +150,11 @@ public:
         // step 3, start service move_camera
         std::cout << "3, start to move the camera" << std::endl;
         start_move_camera_.call ( msg );
-        // step 4, stop services pcl_merger, rough_localizer, and box_segmenter
-        std::cout << "4, stop services pcl_merger, rough_localizer, box_segmenter" << std::endl;
+        // step 4, stop services rough_localizer and box_segmenter
+        std::cout << "4, stop services rough_localizer, box_segmenter" << std::endl;
         if ( stop_rough_localizer_.call ( msg ) && stop_box_segmenter_.call ( msg ) )
         {
+          set_pose ( "scan_start" );
           // step 5, generate scanning plans and write it to the configuration file [do_scan]
           std::cout << "5, start to generate scanning plans" << std::endl;
           start_scan_planner_.call ( msg );
@@ -170,17 +172,17 @@ public:
           if ( set_pose ( "scan_start" ) )
           {
             set_pose ( "screw_start" );
-          //   // step 8, call the service rivet_localizer
-          //   std::cout << "8, start rivet localizer" << std::endl;
-          //   start_rivet_localizer_.call ( msg );
-          //
-          //   // step 9, call the service point_rivet
-          //   std::cout << "9, start to point to rivet" << std::endl;
-          //   start_point_rivet_.call ( msg );
-          //
-          //   // step 10, set the robot pose back to pose screw_start
-          //   std::cout << "10, set the robot pose back to pose screw_start" << std::endl;
-          //   set_pose ( "screw_start" );
+            // step 9, call the service rivet_localizer
+            std::cout << "9, start rivet localizer" << std::endl;
+            start_rivet_localizer_.call ( msg );
+
+            // step 10, call the service point_rivet
+            std::cout << "10, start to point to rivet" << std::endl;
+            start_point_rivet_.call ( msg );
+
+            // step 11, set the robot pose back to pose screw_start
+            std::cout << "11, set the robot pose back to pose screw_start" << std::endl;
+            set_pose ( "screw_start" );
           }
         }
       }
