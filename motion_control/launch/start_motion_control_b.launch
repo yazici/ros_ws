@@ -14,12 +14,13 @@
 
   <!-- start the node "scan_planner_b" which provides the services "start_scan_planner" and "stop_scan_planner" -->
   <node name="scan_planner_b" pkg="object_localizer" type="scan_planner_b" respawn="true" output="screen">
+    <param name="scan_plan_file" type="str" value="scan_plan.cfg"/>
   </node>
 
   <!-- start the node "do_scan_b" which provides the service "start_do_scan" -->
   <node name="do_scan_b" pkg="motion_control" type="do_scan_b" respawn="true" output="screen">
-      <param name="scan_file" type="str" value="do_scan.cfg"/>
-      <param name="scan_idx" type="int" value="1"/>
+    <param name="scan_plan_file" type="str" value="scan_plan.cfg"/>
+    <param name="scan_idx" type="int" value="3"/>
   </node>
 
   <!-- start the node "profile_merger" which provides the service "start_profile_merger" and "stop_profile_merger" -->
@@ -32,8 +33,8 @@
 
   <!-- start the node "point_rivet_b" which provides the service "start_point_rivet" -->
   <node name="point_rivet_b" pkg="motion_control" type="point_rivet_b" respawn="true" output="screen">
-      <param name="XDK" type="int" value="-1"/>
-      <param name="ip_address" type="str" value="192.168.2.183"/>
+    <param name="XDK" type="int" value="-1"/>
+    <param name="ip_address" type="str" value="192.168.2.183"/>
   </node>
 
 </launch>

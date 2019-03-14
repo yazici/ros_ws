@@ -38,16 +38,58 @@ std::string reference_frame = "world";
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud< PointT > PointCloudT;
 
-float x_adjust = -0.015; // adjustment for the x poistion
-float scan_offset = 0.075; // distance to the scaling part
-float scan_distance = 0.10; // scanning path length
-float s_scale = 0.2; // scale of the start scaling scan_distance
-float e_scale = 1.1; // scale of the end scaling scan_distance
+float x_adjust = -0.01; // adjustment for the x poistion
+float scan_distance = 0.075; // set the distance to the scanning part
+float scan_half_length = 0.10; // scanning path length
+float s_scale = 0.2; // scale of the start scanning scan_half_length
+float e_scale = 1.1; // scale of the end scanning scan_half_length
 
+void read_scan_planner_cfg_file ( )
+{
+  std::string scan_planner_cfg_file_name = "scan_planner.cfg";
+  std::string scan_planner_cfg_file = ros::package::getPath ( "object_localizer" ) + "/config/" + scan_planner_cfg_file_name;
+  std::cout << "***The path of the scan_planner file is: [" << scan_planner_cfg_file << "]" << std::endl;
+
+  std::ifstream input ( scan_planner_cfg_file );
+  std::string line;
+  if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+		// adjustment for the x poistion
+    iss >> x_adjust;
+  }
+	if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+		// set the distance to the scanning part
+    iss >> scan_distance;
+  }
+	if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+		// scanning path length
+    iss >> scan_half_length;
+  }
+	if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+		// scale of the start scanning scan_half_length
+    iss >> s_scale;
+  }
+	if ( std::getline ( input, line ) )
+  {
+    std::istringstream iss ( line );
+		// scale of the end scanning scan_half_length
+    iss >> e_scale;
+  }
+
+  input.close();
+}
+
+// filtering an input point cloud
 int filter_mean_k = 40;
 float filter_stddev = 1.0;
 
-// filtering an input point cloud
 void filterOutliner ( PointCloudT::Ptr cloud )
 {
 	static pcl::StatisticalOutlierRemoval < PointT > sor;
@@ -314,10 +356,13 @@ public:
 
   bool start_scan_planner ( std_srvs::Empty::Request& req, std_srvs::Empty::Response& res )
   {
+		read_scan_planner_cfg_file ( );
+		std::cout << "[x_adjust, scan_distance, scan_half_length, s_scale, e_scale] = ["<< x_adjust << ", " << scan_distance << ", " << scan_half_length << ", " << s_scale << ", " << e_scale << "]"<< std::endl;
+
     if ( segment_list->BBox_list_float.size() > 0 )
     {
       ofstream do_scan_fs;
-      std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/do_scan.cfg";
+      std::string cfgFileName = ros::package::getPath ( "motion_control" ) + "/config/scan_plan.cfg";
       do_scan_fs.open ( cfgFileName );
 
       // iterate through all segments
@@ -343,14 +388,14 @@ public:
 
         float theta_tmp = ( theta - 90.0 ) * M_PI / 180.0;
         float x_tmp = x_0 + x_adjust;
-        float y_tmp = y_0 + scan_offset * std::sin ( theta_tmp );
-        float z_tmp = z_0 - scan_offset * std::cos ( theta_tmp );
+        float y_tmp = y_0 + scan_distance * std::sin ( theta_tmp );
+        float z_tmp = z_0 - scan_distance * std::cos ( theta_tmp );
         float x_s = x_tmp;
-        float y_s = y_tmp - scan_distance * std::cos ( theta_tmp ) * s_scale;
-        float z_s = z_tmp - scan_distance * std::sin ( theta_tmp ) * s_scale;
+        float y_s = y_tmp - scan_half_length * std::cos ( theta_tmp ) * s_scale;
+        float z_s = z_tmp - scan_half_length * std::sin ( theta_tmp ) * s_scale;
         float x_e = x_tmp;
-        float y_e = y_tmp + scan_distance * std::cos ( theta_tmp ) * e_scale;
-        float z_e = z_tmp + scan_distance * std::sin ( theta_tmp ) * e_scale;
+        float y_e = y_tmp + scan_half_length * std::cos ( theta_tmp ) * e_scale;
+        float z_e = z_tmp + scan_half_length * std::sin ( theta_tmp ) * e_scale;
 
         // step 3, write scanning plannings.
         std::cout << std::endl << "[***] Rotation around x is [" << theta << "] degrees" << std::endl;

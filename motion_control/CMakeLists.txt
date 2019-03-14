@@ -21,6 +21,8 @@ find_package(catkin REQUIRED
     tf2
     tf2_ros
     std_srvs
+    pcl_ros
+    pcl_conversions
 )
 
 find_package(Boost REQUIRED system filesystem date_time thread)

@@ -1,10 +1,13 @@
 #include <cmath>
 #include <iostream>
+#include <stdio.h>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <ctime>
 
+#include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <ros/package.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -20,20 +23,37 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/icp.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/normal_3d.h>
+
+typedef pcl::PointXYZ PointT;
+typedef pcl::PointCloud< PointT > PointCloudT;
 static const std::string PLANNING_GROUP = "camera";
 
 class ControlNode {
 
-  ros::NodeHandle nh_;
   ros::ServiceClient start_pcl_merger_, stop_pcl_merger_, start_rough_localizer_, stop_rough_localizer_, start_box_segmenter_, stop_box_segmenter_, start_scan_planner_, stop_scan_planner_, start_move_camera_, start_do_scan_, start_rivet_localizer_, start_point_rivet_;
 
   boost::shared_ptr< moveit::planning_interface::MoveGroupInterface > move_group;
   boost::shared_ptr< moveit::planning_interface::PlanningSceneInterface > planning_scene_interface;
   const robot_state::JointModelGroup* joint_model_group;
 
+  ros::NodeHandle nh_;
+  pcl::PointCloud<PointT>::Ptr scene_cloud_;
+  ros::Subscriber cloud_sub_;
+  pcl::PLYWriter writer;
+
 public:
 
-  ControlNode ()
+  ControlNode () : scene_cloud_ ( new pcl::PointCloud< PointT > )
   {
     // pcl_merger, rough_localizer, box_segmenter, scan_planner and move_camera
     start_pcl_merger_ = nh_.serviceClient < std_srvs::Empty > ( "start_pcl_merge" );
@@ -54,10 +74,29 @@ public:
     joint_model_group = move_group->getCurrentState()->getJointModelGroup ( PLANNING_GROUP );
     ROS_INFO_NAMED ( "control_node", "Reference frame: %s", move_group->getPlanningFrame().c_str() );
     ROS_INFO_NAMED ( "control_node", "End effector link: %s", move_group->getEndEffectorLink().c_str() );
+
+    std::string cloud_in_name = "/profile_merger/points";
+    cloud_sub_ = nh_.subscribe ( cloud_in_name, 3, &ControlNode::cloud_cb, this );
+    ROS_INFO_STREAM ( "Listening point cloud message on topic " << cloud_in_name );
   }
 
   ~ControlNode ()
   {}
+
+  void cloud_cb ( const sensor_msgs::PointCloud2::ConstPtr& cloud )
+  {
+    // if input cloud is empty or is not dense, publish the old point cloud and return
+    if ( ( cloud->width * cloud->height ) == 0 ) // && ! cloud->is_dense
+    {
+      return;
+    }
+
+    // convert input ros cloud to pcl cloud
+    // and save it in local variable scene_cloud
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL( *cloud, pcl_pc2 );
+    pcl::fromPCLPointCloud2 ( pcl_pc2, *scene_cloud_ );
+  }
 
   // scan_start, scan_end, screw_start
   bool set_pose ( std::string pose_name )
@@ -79,6 +118,13 @@ public:
       move_group->move ();
     }
     return success;
+  }
+
+  bool save_profile_pc ()
+  {
+    std::string pc_file_path = ros::package::getPath ( "object_localizer" )+ "/data/pc_out_0.ply";
+		std::cout << "\tSaving point cloud to file: \n\t" << pc_file_path << std::endl;
+		writer.write ( pc_file_path, *scene_cloud_ );
   }
 
   void execute_pipeline ()
@@ -115,8 +161,12 @@ public:
           std::cout << "6, start profile scanning" << std::endl;
           start_do_scan_.call ( msg );
 
-          // step 7, move back to pose scan_start
-          std::cout << "7, set the robot pose back to scan_start and then screw_start" << std::endl;
+          // step 7, start profile scan
+          std::cout << "7, Saving profile point cloud" << std::endl;
+          save_profile_pc ();
+
+          // step 8, move back to pose scan_start
+          std::cout << "8, set the robot pose back to scan_start and then screw_start" << std::endl;
           if ( set_pose ( "scan_start" ) )
           {
             set_pose ( "screw_start" );
@@ -138,6 +188,8 @@ public:
   }
 
 };
+
+
 
 int main ( int argc, char** argv )
 {
